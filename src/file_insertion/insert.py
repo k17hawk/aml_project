@@ -50,17 +50,13 @@ class DataInserter:
             csv_data = blob.download_as_text()
             df = pd.read_csv(StringIO(csv_data))
 
-
-            # Explicitly set correct data types
             df["Sender_account"] = df["Sender_account"].astype(str)  
             df["Receiver_account"] = df["Receiver_account"].astype(str)
             df["Amount"] = df["Amount"].astype(float)
             df["Is_laundering"] = df["Is_laundering"].astype(int)
 
-            # Trim spaces from text columns
             df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
 
-            # Prepare query
             insert_query = f"""
                 INSERT INTO {self.table} (Time, Date, Sender_account, Receiver_account, Amount, Payment_currency, 
                 Received_currency, Sender_bank_location, Receiver_bank_location, Payment_type, Is_laundering, Laundering_type)
@@ -85,15 +81,11 @@ class DataInserter:
             print("Database Error:", e)
 
 
-
-# Connect to the database
 db_connector = DatabaseConnector(SQL_SERVER, SQL_DATABASE)
 db_connector.connect()
 
-# Insert data
 data_inserter = DataInserter(db_connector, TABLE_NAME)
 data_inserter.ensure_table_exists()
 data_inserter.insert_data_from_csv()
 
-# Close connection
 db_connector.close_connection()
