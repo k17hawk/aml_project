@@ -48,7 +48,8 @@ class DataInserter:
             bucket = storage_client.bucket(BUCKET_NAME)
             blob = bucket.blob(GCS_FILE_NAME)
             csv_data = blob.download_as_text()
-            df = pd.read_csv(StringIO(csv_data))
+            df = pd.read_csv(StringIO(csv_data), encoding="utf-8")
+
 
             df["Sender_account"] = df["Sender_account"].astype(str)  
             df["Receiver_account"] = df["Receiver_account"].astype(str)
@@ -81,7 +82,7 @@ class DataInserter:
             print("Database Error:", e)
 
 
-db_connector = DatabaseConnector(SQL_SERVER, SQL_DATABASE)
+db_connector = DatabaseConnector(SQL_SERVER, SQL_DATABASE, SQL_USERNAME, SQL_PASSWORD)
 db_connector.connect()
 
 data_inserter = DataInserter(db_connector, TABLE_NAME)

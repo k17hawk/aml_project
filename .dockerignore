@@ -169,7 +169,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+.env
+
 /Data
 /tmp
-/datastorage*
-/.env
+/logs

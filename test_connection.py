@@ -1,5 +1,5 @@
 import pyodbc
-
+from src.constants import SQL_SERVER,SQL_DATABASE,SQL_USERNAME,SQL_PASSWORD
 class DatabaseConnector:
     def __init__(self, server, database, username, password):
         self.server = server
@@ -16,7 +16,7 @@ class DatabaseConnector:
                 f'SERVER={self.server};'
                 f'UID={self.username};'
                 f'PWD={self.password};'
-                f'Encrypt=Optional;' 
+                f'Encrypt=Optional;'  
                 f'TrustServerCertificate=Yes;'
             )
    
@@ -24,7 +24,6 @@ class DatabaseConnector:
             master_conn.autocommit = True
             print("Connected to SQL Server...")
 
-            # Check if the database exists
             cursor.execute(f"SELECT COUNT(*) FROM sys.databases WHERE name = '{self.database}'")
             if cursor.fetchone()[0] == 0:
                 cursor.execute(f"CREATE DATABASE {self.database}")
@@ -34,7 +33,7 @@ class DatabaseConnector:
             cursor.close()
             master_conn.close()
             
-            # Connect to the specific database
+        
             self.connection = pyodbc.connect(
                 f'DRIVER={{ODBC Driver 18 for SQL Server}};'
                 f'SERVER={self.server};'
@@ -55,12 +54,7 @@ class DatabaseConnector:
             self.connection.close()
             print("Database connection closed.")
 
-# # Usage
-# SQL_SERVER = "***.***.*.**,1433"  
-# SQL_DATABASE = "master_2"
-# SQL_USERNAME = "newuser"  
-# SQL_PASSWORD = "toor"  #
 
-# db = DatabaseConnector(SQL_SERVER, SQL_DATABASE, SQL_USERNAME, SQL_PASSWORD)
-# db.connect()
-# db.close_connection()
+db = DatabaseConnector(SQL_SERVER, SQL_DATABASE, SQL_USERNAME, SQL_PASSWORD)
+db.connect()
+db.close_connection()

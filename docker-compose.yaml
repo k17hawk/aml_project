@@ -1,0 +1,20 @@
+services:
+  airflow:
+    image: my-airflow-image
+    container_name: my-airflow-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/app/dags
+      - ./src:/app/src
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    networks:
+      - airflow-network
+
+networks:
+  airflow-network:
+    driver: bridge

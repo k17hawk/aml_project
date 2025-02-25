@@ -1,25 +1,36 @@
-"""
-author:@kumar dahal
-this function is written for version controlling.
-It will read long description from readme.md file
-"""
-#import setuptools
-import setuptools
+from setuptools import setup, find_packages
+from typing import List
 
-with open("README.md", "r", encoding="utf-8") as f:
-    long_description = f.read()
-#set the initial version as 0
-__version__ = "0.0.1"
+# Declaring variables for setup functions
+PROJECT_NAME = "src"
+VERSION = "0.0.1"
+AUTHOR = "Kumar Dahal"
+DESRCIPTION = "This is a sample for industry ready solution"
+REQUIREMENT_FILE_NAME = "requirements.txt"
 
-REPO_NAME = "aml_project"
-AUTHOR_USER_NAME = "k17hawk"
-SRC_REPO = "src"
-AUTHOR_EMAIL = "kumardahal536@gmail.com"
+HYPHEN_E_DOT ="-e ."
 
-setuptools.setup(
-    name=SRC_REPO,
-    version=__version__,
-    #for now we have only one package directory so we have given src, also it is our main src directory
-    package_dir={"": "src"},
-    packages=setuptools.find_packages(where="src")
+
+def get_requirements_list(file_path=REQUIREMENT_FILE_NAME) -> List[str]:
+    """
+    Description: This function is going to return list of requirement
+    mention in requirements.txt file
+    return This function is going to return a list which contain name
+    of libraries mentioned in requirements.txt file
+    """
+    with open(file_path) as requirement_file:
+        requirement_list = requirement_file.readlines()
+        requirement_list = [requirement_name.replace("\n", "") for requirement_name in requirement_list]
+        if HYPHEN_E_DOT in requirement_list:
+            requirement_list.remove(HYPHEN_E_DOT)
+        return requirement_list
+
+
+setup(
+    name=PROJECT_NAME,
+    version=VERSION,
+    author=AUTHOR,
+    description=DESRCIPTION,
+    packages=find_packages(),
+    install_requires=get_requirements_list()
 )
