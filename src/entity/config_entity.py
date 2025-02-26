@@ -1,0 +1,46 @@
+import os,sys
+from dataclasses import dataclass
+from datetime import datetime
+from exception import AMLException
+from constants import TIMESTAMP,DATA_INGESTION_DIR,DATA_INGESTION_METADATA_FILE_NAME,DATA_INGESTION_DOWNLOADED_DATA_DIR,\
+    DATA_INGESTION_FAILED_DIR,DATA_INGESTION_FILE_NAME,DATA_INGESTION_FEATURE_STORE_DIR,SQL_SERVER,\
+    SQL_DATABASE,SQL_USERNAME,SQL_PASSWORD,TABLE_NAME
+from .metadeta_info import DataIngestionMetadata
+
+#training pipeline config
+@dataclass
+class TrainingPipelineConfig:
+    pipeline_name:str="artifact"
+    artifact_dir:str = os.path.join(pipeline_name,TIMESTAMP)
+
+#Data Ingestion Config
+class DataIngestionConfig:
+    def __init__(self,training_pipeline_config:TrainingPipelineConfig,
+                        fetch_date = TIMESTAMP):
+        try:
+            self.data_fetch=fetch_date
+
+            data_ingestion_master_dir = os.path.join(os.path.dirname(training_pipeline_config.artifact_dir),DATA_INGESTION_DIR)
+            self.data_ingestion_dir = os.path.join(data_ingestion_master_dir,TIMESTAMP)
+            self.metadata_file_path = os.path.join(data_ingestion_master_dir, DATA_INGESTION_METADATA_FILE_NAME)
+
+            data_ingestion_metadata = DataIngestionMetadata(metadata_file_path=self.metadata_file_path)
+            self.date_fetch = TIMESTAMP
+            if data_ingestion_metadata.is_metadata_file_present:
+                metadata_info = data_ingestion_metadata.get_metadata_info()
+                self.date_fetch = metadata_info.fetch_date
+
+            self.download_dir=os.path.join(self.data_ingestion_dir, DATA_INGESTION_DOWNLOADED_DATA_DIR)
+            self.failed_dir =os.path.join(self.data_ingestion_dir, DATA_INGESTION_FAILED_DIR)
+            self.file_name = DATA_INGESTION_FILE_NAME
+            self.feature_store_dir=os.path.join(data_ingestion_master_dir, DATA_INGESTION_FEATURE_STORE_DIR)
+            self.datasource_url = SQL_SERVER
+            self.database = SQL_DATABASE
+            self.username = SQL_USERNAME
+            self.password = SQL_PASSWORD
+            self.table = TABLE_NAME
+
+
+
+        except Exception as e:
+            raise AMLException(e,sys)

@@ -4,4 +4,6 @@ google-cloud-storage
 pyodbc
 apache-airflow
 python-dotenv
--e .
+pyspark
+tqdm
+# -e .
