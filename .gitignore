@@ -174,3 +174,4 @@ cython_debug/
 /datastorage*
 /.env
 src/config/mssql-jdbc-12.8.1.jre11.jar
+*.csv
