@@ -171,7 +171,7 @@ cython_debug/
 .pypirc
 /Data
 /tmp
-/datastorage*
+/cloud-api*
 /.env
 src/config/mssql-jdbc-12.8.1.jre11.jar
 /Jupyter_research/testing_data.csv
