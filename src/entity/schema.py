@@ -94,17 +94,14 @@ class TransactionDataSchema:
     
     @property
     def required_columns(self) -> List[str]:
-        features = self.target_cols+\
+        features = [self.target_column,self.col_sender_account,self.col_receiver_account,self.col_amount]+\
                 self.derived_output_features+\
-                self.string_indexing_input_features+\
-                self.col_sender_account+\
-                self.col_receiver_account+\
-                self.col_amount
+                self.string_indexing_input_features
         return features
     
     @property
     def numerical_columns(self) -> List[str]:
-        return self.derived_input_features+self.col_sender_account+self.col_receiver_account+self.col_amount+self.col_is_laundering
+        return self.derived_input_features+[self.col_sender_account,self.col_receiver_account,self.col_amount,self.col_is_laundering]
     
     @property
     def numerical_out_columns(self) -> List[str]:
@@ -130,11 +127,10 @@ class TransactionDataSchema:
     @property
     def vector_assembler_out_cols(self) -> List[str]:
         return 'features'
-    
-    
+
     
     @property
-    def target_cols(self) -> List[str]:
+    def target_out(self) -> List[str]:
         return f'num_{self.col_is_laundering}'
     
     

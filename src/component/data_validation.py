@@ -93,6 +93,7 @@ class DataValidation():
 
             unwanted_dataframe = unwanted_dataframe.withColumn(ERROR_MESSAGE, lit("Contains many missing values"))
 
+
             rejected_dir = os.path.join(self.data_validation_config.rejected_data_dir, "missing_data")
             os.makedirs(rejected_dir, exist_ok=True)
             file_path = os.path.join(rejected_dir, self.data_validation_config.file_name)
