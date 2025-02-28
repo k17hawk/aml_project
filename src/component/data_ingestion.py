@@ -7,7 +7,7 @@ import pandas as pd
 from src.config.spark_manager import spark_session
 import pyodbc
 from tqdm import tqdm
-from src.entity.artifact_entity import DataIngestionArtifact
+from src.entity.artifcat_entity import DataIngestionArtifact
 
 class DataIngestion:
 
@@ -124,11 +124,7 @@ class DataIngestion:
         except Exception as e:
             raise AMLException(e, sys)
 
-if __name__ == "__main__":
-    training_pipeline_config = TrainingPipelineConfig()
-    data_ingestion_config = DataIngestionConfig(training_pipeline_config=training_pipeline_config)
-    ingestion = DataIngestion(data_ingestion_config)
-    ingestion.initiate_data_ingestion()
+
     
 
 

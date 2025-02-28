@@ -6,4 +6,7 @@ apache-airflow
 python-dotenv
 pyspark
 tqdm
+pyarrow
+venv-pack 
+xgboost
 # -e .
