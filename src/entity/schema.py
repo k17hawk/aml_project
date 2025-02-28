@@ -20,7 +20,7 @@ class TransactionDataSchema:
         self.col_laundering_type: str = 'Laundering_type'
         self.col_hour:str = 'Hour'
         self.col_minutes:str = 'Minutes'
-        self.col_second:str = 'Minutes'
+        self.col_second:str = 'second'
         self.col_year:str = 'Year'
         self.col_month:str = 'Month'
         self.col_day:str = 'Day'
@@ -75,6 +75,14 @@ class TransactionDataSchema:
     @property
     def derived_input_features(self) -> List[str]:
         features = [
+            self.col_date,
+            self.col_time
+        ]
+        return features
+    
+    @property
+    def derived_output_features(self) -> List[str]:
+        features = [
             self.col_hour,
             self.col_minutes,
             self.col_second,
@@ -82,6 +90,16 @@ class TransactionDataSchema:
             self.col_month,
             self.col_day
         ]
+        return features
+    
+    @property
+    def required_columns(self) -> List[str]:
+        features = self.target_cols+\
+                self.derived_output_features+\
+                self.string_indexing_input_features+\
+                self.col_sender_account+\
+                self.col_receiver_account+\
+                self.col_amount
         return features
     
     @property
@@ -112,6 +130,8 @@ class TransactionDataSchema:
     @property
     def vector_assembler_out_cols(self) -> List[str]:
         return 'features'
+    
+    
     
     @property
     def target_cols(self) -> List[str]:

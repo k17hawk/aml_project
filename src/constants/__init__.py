@@ -31,3 +31,10 @@ DATA_INGESTION_FILE_NAME = "Transaction"
 DATA_INGESTION_FEATURE_STORE_DIR = "feature_store"
 DATA_INGESTION_FAILED_DIR = "failed_downloaded_files"
 DATA_INGESTION_METADATA_FILE_NAME = "meta_info.yaml"
+
+DATA_VALIDATION_DIR = "data_validation"
+DATA_VALIDATION_FILE_NAME = "aml_prediction"
+DATA_VALIDATION_ACCEPTED_DATA_DIR = "accepted_data"
+DATA_VALIDATION_REJECTED_DATA_DIR = "rejected_data"
+
+

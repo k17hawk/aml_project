@@ -79,7 +79,7 @@ class DataIngestion:
         try:
             logger.info(f"converting file into parquet...")
             data_dir = self.data_ingestion_config.feature_store_dir
-            output_file_name = f"{self.data_ingestion_config.file_name}.parquet"
+            output_file_name = f"{self.data_ingestion_config.file_name}"
             os.makedirs(data_dir, exist_ok=True)
             file_path = os.path.join(data_dir, output_file_name)
 

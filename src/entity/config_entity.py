@@ -5,6 +5,7 @@ from exception import AMLException
 from constants import TIMESTAMP,DATA_INGESTION_DIR,DATA_INGESTION_METADATA_FILE_NAME,DATA_INGESTION_DOWNLOADED_DATA_DIR,\
     DATA_INGESTION_FAILED_DIR,DATA_INGESTION_FILE_NAME,DATA_INGESTION_FEATURE_STORE_DIR,SQL_SERVER,\
     SQL_DATABASE,SQL_USERNAME,SQL_PASSWORD,TABLE_NAME
+from constants import *
 from .metadeta_info import DataIngestionMetadata
 
 #training pipeline config
@@ -39,8 +40,17 @@ class DataIngestionConfig:
             self.username = SQL_USERNAME
             self.password = SQL_PASSWORD
             self.table = TABLE_NAME
+        except Exception as e:
+            raise AMLException(e,sys)
 
+class DataValidationConfig:
 
-
+    def __init__(self,training_pipeline_config:TrainingPipelineConfig) -> None:
+        try:
+            data_validation_dir = os.path.join(training_pipeline_config.artifact_dir,
+                                                   DATA_VALIDATION_DIR)
+            self.accepted_data_dir = os.path.join(data_validation_dir, DATA_VALIDATION_ACCEPTED_DATA_DIR)
+            self.rejected_data_dir = os.path.join(data_validation_dir, DATA_VALIDATION_REJECTED_DATA_DIR)
+            self.file_name=DATA_VALIDATION_FILE_NAME
         except Exception as e:
             raise AMLException(e,sys)
