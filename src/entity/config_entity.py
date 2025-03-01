@@ -22,6 +22,7 @@ class DataIngestionConfig:
             self.data_fetch=fetch_date
 
             data_ingestion_master_dir = os.path.join(os.path.dirname(training_pipeline_config.artifact_dir),DATA_INGESTION_DIR)
+            
             self.data_ingestion_dir = os.path.join(data_ingestion_master_dir,TIMESTAMP)
             self.metadata_file_path = os.path.join(data_ingestion_master_dir, DATA_INGESTION_METADATA_FILE_NAME)
 
@@ -47,8 +48,9 @@ class DataValidationConfig:
 
     def __init__(self,training_pipeline_config:TrainingPipelineConfig) -> None:
         try:
-            data_validation_dir = os.path.join(training_pipeline_config.artifact_dir,
+            data_validation_master_dir = os.path.join(os.path.dirname(training_pipeline_config.artifact_dir),
                                                    DATA_VALIDATION_DIR)
+            data_validation_dir = os.path.join(data_validation_master_dir,TIMESTAMP)
             self.accepted_data_dir = os.path.join(data_validation_dir, DATA_VALIDATION_ACCEPTED_DATA_DIR)
             self.rejected_data_dir = os.path.join(data_validation_dir, DATA_VALIDATION_REJECTED_DATA_DIR)
             self.file_name=DATA_VALIDATION_FILE_NAME
