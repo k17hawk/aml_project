@@ -108,15 +108,12 @@ class DataValidation():
 
     def is_required_columns_exist(self, dataframe: DataFrame):
         try:
-            columns = list(filter(lambda x: x in self.schema.required_columns,
-                                  dataframe.columns))
-            
+            missing_columns = set(self.schema.required_columns) - set(dataframe.columns)
 
-            if len(columns) != len(self.schema.required_columns):
-                raise Exception(f"Required column missing\n\
-                 Expected columns: {self.schema.required_columns}\n\
-                 Found columns: {columns}\
-                 ")
+            if missing_columns:
+                raise Exception(f"Required column(s) missing:\n"
+                                f"Expected columns: {self.schema.required_columns}\n"
+                                f"Missing columns: {missing_columns}")
 
         except Exception as e:
             raise AMLException(e, sys)
@@ -127,7 +124,7 @@ class DataValidation():
             dataframe: DataFrame = self.read_data()
 
             logger.info(f"Dropping unwanted columns")
-            dataframe: DataFrame = self.drop_unwanted_columns(dataframe=dataframe)
+            dataframe: DataFrame = self.get_unwanted_and_high_missing_value_columns(dataframe=dataframe)
 
             # validation to ensure that all require column available
             self.is_required_columns_exist(dataframe=dataframe)

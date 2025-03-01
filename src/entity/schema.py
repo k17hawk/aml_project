@@ -94,9 +94,7 @@ class TransactionDataSchema:
     
     @property
     def required_columns(self) -> List[str]:
-        features = [self.target_column,self.col_sender_account,self.col_receiver_account,self.col_amount]+\
-                self.derived_output_features+\
-                self.string_indexing_input_features
+        features = [self.target_column,self.col_sender_account,self.col_receiver_account,self.col_amount]+self.string_indexing_input_features
         return features
     
     @property
