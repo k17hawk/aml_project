@@ -52,6 +52,7 @@ class TransactionDataSchema:
             return schema
         except Exception as e:
             raise AMLException(e, sys) from e
+        
     @property
     def target_column(self) -> str:
         return self.col_is_laundering
@@ -70,7 +71,7 @@ class TransactionDataSchema:
     
     @property
     def string_indexing_out_features(self) -> List[str]:
-        return [f"im_{col}" for col in self.string_indexing_input_features]
+        return [f"index_{col}" for col in self.string_indexing_input_features]
     
     @property
     def derived_input_features(self) -> List[str]:
@@ -99,7 +100,7 @@ class TransactionDataSchema:
     
     @property
     def numerical_columns(self) -> List[str]:
-        return self.derived_input_features+[self.col_sender_account,self.col_receiver_account,self.col_amount,self.col_is_laundering]
+        return self.derived_input_features+[self.col_sender_account,self.col_receiver_account,self.col_amount]
     
     @property
     def numerical_out_columns(self) -> List[str]:
@@ -115,16 +116,15 @@ class TransactionDataSchema:
     
     @property
     def vector_assembler_input_cols(self) -> List[str]:
-        features = [
-            f"num_{self.col_sender_account}",
-            f"num_{self.col_receiver_account}",
-           f"num_{self.col_amount}"
-        ] + [f"num_{col}"for col in self.derived_input_features]+self.string_indexing_out_features
+        features = self.numerical_out_columns +self.string_indexing_out_features
         return features
     
     @property
     def vector_assembler_out_cols(self) -> List[str]:
-        return 'features'
+        return 'va_input_features'
+    @property
+    def scaled_vector_input_features(self) -> str:
+        return "scaled_input_features"
 
     
     @property
