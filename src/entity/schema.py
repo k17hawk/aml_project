@@ -18,12 +18,12 @@ class TransactionDataSchema:
         self.col_payment_type: str = 'Payment_type'
         self.col_is_laundering: str = 'Is_laundering'
         self.col_laundering_type: str = 'Laundering_type'
-        self.col_hour:str = 'Hour'
-        self.col_minutes:str = 'Minutes'
+        self.col_hour:str = 'hour'
+        self.col_minutes:str = 'minute'
         self.col_second:str = 'second'
-        self.col_year:str = 'Year'
-        self.col_month:str = 'Month'
-        self.col_day:str = 'Day'
+        self.col_year:str = 'year'
+        self.col_month:str = 'month'
+        self.col_day:str = 'day'
 
     @property
     def dataframe_schema(self) -> StructType:
@@ -93,6 +93,7 @@ class TransactionDataSchema:
         ]
         return features
     
+    
     @property
     def required_columns(self) -> List[str]:
         features = [self.col_date,self.col_time,self.target_column,self.col_sender_account,self.col_receiver_account,self.col_amount]+self.string_indexing_input_features
@@ -100,7 +101,7 @@ class TransactionDataSchema:
     
     @property
     def numerical_columns(self) -> List[str]:
-        return self.derived_input_features+[self.col_sender_account,self.col_receiver_account,self.col_amount]
+        return self.derived_output_features+[self.col_sender_account,self.col_receiver_account,self.col_amount]
     
     @property
     def numerical_out_columns(self) -> List[str]:

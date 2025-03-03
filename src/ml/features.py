@@ -1,27 +1,17 @@
 from pyspark.ml import Transformer
-from pyspark.ml.param.shared import HasInputCols, HasOutputCols
+from pyspark.ml.param.shared import HasInputCols, HasOutputCols,TypeConverters
 from pyspark.sql.functions import to_date, to_timestamp, year, month, dayofmonth, hour, minute, second, col
 from pyspark.sql import DataFrame
 from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
 from typing import List
 from pyspark.ml.param.shared import Param, Params
+from pyspark import keyword_only
 
-from pyspark.ml import Transformer
-from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
-from pyspark.sql.functions import col
-from pyspark.sql import DataFrame
-from typing import List
-
-from pyspark.ml import Transformer
-from pyspark.ml.param.shared import Param, Params
-from pyspark.ml.util import DefaultParamsReadable, DefaultParamsWritable
-from pyspark.sql.functions import col
-from pyspark.sql import DataFrame
-from typing import List
 
 class TypeCastTransformer(Transformer, DefaultParamsReadable, DefaultParamsWritable):
-    def __init__(self, inputCols: List[str], outputCols: List[str], targetCol: str, targetType: str = "int"):
+    def __init__(self,otherCols:List[str], inputCols: List[str], outputCols: List[str], targetCol: str, targetType: str = "int"):
         super().__init__()
+        self.othercols = otherCols
         self.inputCols = inputCols  
         self.outputCols = outputCols  
         self.targetCol = targetCol  
@@ -31,15 +21,16 @@ class TypeCastTransformer(Transformer, DefaultParamsReadable, DefaultParamsWrita
         # Ensuring input and output column lists match
         if len(self.inputCols) != len(self.outputCols):
             raise ValueError("inputCols and outputCols must have the same length!")
-
+      
         # Casting input feature columns
         casted_feature_cols = [col(inp).cast("double").alias(out) for inp, out in zip(self.inputCols, self.outputCols)]
 
         # Casting target column separately
         casted_target_col = col(self.targetCol).cast(self.targetType).alias(self.targetCol)
         # Selecting all other columns that are not transformed
-        other_cols = [col(c) for c in df.columns if c not in self.inputCols and c != self.targetCol]
-        return df.select(*other_cols,*casted_feature_cols, casted_target_col)
+        selected_other_cols = [col(c) for c in self.othercols]  
+    
+        return df.select(*selected_other_cols,*casted_feature_cols, casted_target_col)
 
 
 class DropColumnsTransformer(Transformer, DefaultParamsReadable, DefaultParamsWritable):
@@ -58,24 +49,56 @@ class DropColumnsTransformer(Transformer, DefaultParamsReadable, DefaultParamsWr
         cols_to_drop = self.getOrDefault(self.input_cols)
         if cols_to_drop:
             return df.drop(*cols_to_drop)
+        print(df.show())
         return df
 
 
 
 class DateTimeFeatureExtractor(Transformer, HasInputCols, HasOutputCols,
                                DefaultParamsReadable, DefaultParamsWritable):
-    def __init__(self, inputCols=None, outputCols=None):
+
+    frequencyInfo = Param(Params._dummy(), "getfrequencyInfo", "getfrequencyInfo",
+                          typeConverter=TypeConverters.toList)
+
+    @keyword_only
+    def __init__(self, inputCols: List[str] = None, outputCols: List[str] = None, ):
         super(DateTimeFeatureExtractor, self).__init__()
-        self._setDefault(inputCols=["Date", "Time"], outputCols=[])
         kwargs = self._input_kwargs
-        self.setParams(**kwargs)
+        
     
-    def setParams(self, inputCols=None, outputCols=None):
+        self.frequencyInfo = Param(self, "frequencyInfo", "")
+        self._setDefault(frequencyInfo="")
+        # self._set(**kwargs)
+        self.setParams(**kwargs)
+
+    def setfrequencyInfo(self, frequencyInfo: list):
+        return self._set(frequencyInfo=frequencyInfo)
+
+    def getfrequencyInfo(self):
+        return self.getOrDefault(self.frequencyInfo)
+
+    @keyword_only
+    def setParams(self, inputCols: List[str] = None, outputCols: List[str] = None, ):
         kwargs = self._input_kwargs
         return self._set(**kwargs)
 
+    def setInputCols(self, value: List[str]):
+        """
+        Sets the value of :py:attr:`inputCol`.
+        """
+        return self._set(inputCol=value)
+
+    def setOutputCols(self, value: List[str]):
+        """
+        Sets the value of :py:attr:`outputCol`.
+        """
+        return self._set(outputCols=value)
+    
     def _transform(self, dataframe: DataFrame):
         inputCols = self.getInputCols()
+        if len(inputCols) < 2:
+            raise ValueError("inputCols must contain at least two columns: [date_col, time_col]")
+        
         date_col, time_col = inputCols[0], inputCols[1]
 
         # Convert Date and Time to proper formats
@@ -91,3 +114,4 @@ class DateTimeFeatureExtractor(Transformer, HasInputCols, HasOutputCols,
                              .withColumn("second", second(col(time_col)))
         
         return dataframe
+

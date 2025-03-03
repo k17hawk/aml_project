@@ -48,9 +48,10 @@ class DataTransformation:
             stages.append(drop_cols_transformer)
 
             logger.info("converting data types")
-            type_cast_transformer = TypeCastTransformer(numeric_cols=self.schema.numerical_columns,
+            type_cast_transformer = TypeCastTransformer(otherCols = self.schema.string_indexing_input_features,
+                                                        inputCols=self.schema.numerical_columns,
                                                         outputCols=self.schema.numerical_out_columns,
-                                                        target_col=self.schema.target_column)
+                                                        targetCol=self.schema.target_column)
             stages.append(type_cast_transformer)
 
             logger.info("Applying String indxer Transformer")
@@ -62,10 +63,12 @@ class DataTransformation:
                 stages.append(string_indexer)
             logger.info("Applying vector assameber Transformer")
             
-            vector_assambler = VectorAssembler(inputCols=self.schema.vector_assembler_input_cols,
+            assembled_col = [col for col in self.schema.vector_assembler_input_cols if col!=self.schema.target_column]
+            vector_assambler = VectorAssembler(inputCols=assembled_col,
                                                outputCol=self.schema.vector_assembler_out_cols)
             stages.append(vector_assambler)
             logger.info("applyinh standard scaler")
+            print(self.schema.vector_assembler_out_cols)
             standard_scaler = StandardScaler(inputCol=self.schema.vector_assembler_out_cols,
                                              outputCol=self.schema.scaled_vector_input_features)
             stages.append(standard_scaler)
@@ -99,6 +102,8 @@ class DataTransformation:
             required_columns = [self.schema.scaled_vector_input_features, self.schema.target_column]
 
             transformed_trained_dataframe = transformed_pipeline.transform(train_dataframe)
+            # print(transformed_trained_dataframe.show())
+            # print(transformed_trained_dataframe.show(10))
             transformed_trained_dataframe = transformed_trained_dataframe.select(required_columns)  
 
             transformed_test_dataframe = transformed_pipeline.transform(test_dataframe)

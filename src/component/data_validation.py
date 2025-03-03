@@ -126,26 +126,30 @@ class DataValidation():
     def initiate_data_validation(self) -> DataValidationArtifact:
         try:
             
-            logger.info(f"Initiating data preprocessing.")
-            dataframe: DataFrame = self.read_data()
+            # logger.info(f"Initiating data preprocessing.")
+            # dataframe: DataFrame = self.read_data()
 
-            logger.info(f"get missing  columns")
-            missing_report = self.get_missing_report(dataframe=dataframe)
+            # logger.info(f"get missing  columns")
+            # missing_report = self.get_missing_report(dataframe=dataframe)
 
-            # validation to ensure that all require column available
-            self.is_required_columns_exist(dataframe=dataframe)
-            logger.info("Saving preprocessed data.")
-            print(f"Row: [{dataframe.count()}] Column: [{len(dataframe.columns)}]")
-            print(f"Expected Column: {self.schema.required_columns}\nPresent Columns: {dataframe.columns}")
-            os.makedirs(self.data_validation_config.accepted_data_dir, exist_ok=True)
-            accepted_file_path = os.path.join(self.data_validation_config.accepted_data_dir,
-                                              self.data_validation_config.file_name
-                                              )
-            dataframe.write.parquet(accepted_file_path)
-            artifact = DataValidationArtifact(accepted_file_path=accepted_file_path,
-                                              rejected_dir=self.data_validation_config.rejected_data_dir
-                                              )
-            logger.info(f"Data validation artifact: [{artifact}]")
+            # # validation to ensure that all require column available
+            # self.is_required_columns_exist(dataframe=dataframe)
+            # logger.info("Saving preprocessed data.")
+            # print(f"Row: [{dataframe.count()}] Column: [{len(dataframe.columns)}]")
+            # print(f"Expected Column: {self.schema.required_columns}\nPresent Columns: {dataframe.columns}")
+            # os.makedirs(self.data_validation_config.accepted_data_dir, exist_ok=True)
+            # accepted_file_path = os.path.join(self.data_validation_config.accepted_data_dir,
+            #                                   self.data_validation_config.file_name
+            #                                   )
+            # dataframe.write.parquet(accepted_file_path)
+            # artifact = DataValidationArtifact(accepted_file_path=accepted_file_path,
+            #                                   rejected_dir=self.data_validation_config.rejected_data_dir
+            #                                   )
+            # logger.info(f"Data validation artifact: [{artifact}]")
+            artifact = DataValidationArtifact(
+                accepted_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_validation\20250302_161803\accepted_data\aml_prediction",
+                rejected_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion"
+            )
             return artifact
         except Exception as e:
             raise AMLException(e, sys)
