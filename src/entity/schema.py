@@ -126,6 +126,14 @@ class TransactionDataSchema:
     @property
     def scaled_vector_input_features(self) -> str:
         return "scaled_input_features"
+    
+    @property
+    def target_indexed_label(self) -> str:
+        return f"indexed_{self.target_column}"
+    
+    @property
+    def prediction_column_name(self) -> str:
+        return "prediction"
 
     
     @property
