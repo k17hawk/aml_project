@@ -79,12 +79,53 @@ class DataTransformation:
             return pipeline
         except Exception as e:
             raise AMLException(e, sys)
+    
+    
+
+    def get_balanced_shuffled_dataframe(self, dataframe: DataFrame) -> DataFrame:
+        try:
+            count_of_each_cat = dataframe.groupby(self.schema.target_column).count().collect()
+            
+            label = []
+            n_record = []
+            for info in count_of_each_cat:
+                n_record.append(info['count'])
+                label.append(info[self.schema.target_column])
+            # Finding  the majority class count
+            majority_row = max(n_record)  
+            # Oversampling fraction
+            n_per = [majority_row / record for record in n_record]  
+
+            selected_row = []
+            for label, per in zip(label, n_per):
+                print(label, per)
+                temp_df = dataframe.filter(col(self.schema.target_column) == label)
+                
+                # Performing Oversampling
+                if per > 1:
+                    temp_df = temp_df.sample(withReplacement=True, fraction=per, seed=42)
+                
+                selected_row.append(temp_df)
+
+            selected_df: DataFrame = selected_row[0]
+            for df in selected_row[1:]:
+                selected_df = selected_df.union(df)
+
+            # Shuffling the data
+            selected_df = selected_df.orderBy(rand())  
+            selected_df.groupby(self.schema.target_column).count().show()
+
+            return selected_df
+        except Exception as e:
+            raise AMLException(e, sys)
+
         
     
     def initiate_data_transformation(self) -> DataTransformationArtifact:
         try:
             logger.info(f">>>>>>>>>>>Started data transformation <<<<<<<<<<<<<<<")
             dataframe: DataFrame = self.read_data()
+            dataframe = self.get_balanced_shuffled_dataframe(dataframe=dataframe)
             logger.info(f"Number of row: [{dataframe.count()}] and column: [{len(dataframe.columns)}]")
 
             test_size = self.data_tf_config.test_size
