@@ -124,6 +124,9 @@ class DataTransformation:
                                                            )
 
             logger.info(f"Saving transformation pipeline at: [{export_pipeline_file_path}]")
+            print(export_pipeline_file_path)
+            print(type(transformed_pipeline))
+            # transformed_pipeline.save(r"C:\Users\lang-chain\Documents\aml_project\testing")
             transformed_pipeline.save(export_pipeline_file_path)
             logger.info(f"Saving transformed train data at: [{transformed_train_data_file_path}]")
             print(transformed_trained_dataframe.count(), len(transformed_trained_dataframe.columns))
