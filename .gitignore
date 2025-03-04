@@ -177,3 +177,4 @@ src/config/mssql-jdbc-12.8.1.jre11.jar
 /Jupyter_research/testing_data.csv
 /Jupyter_research/training_data.csv
 /artifact
+/saved_models
