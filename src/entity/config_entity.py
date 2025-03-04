@@ -94,9 +94,12 @@ class ModelEvaluationConfig:
 
     def __init__(self, training_pipeline_config:TrainingPipelineConfig) -> None:
         try:
-        
-            self.model_evaluation_dir = os.path.join(training_pipeline_config.artifact_dir,
+
+            model_evaluation_master_dir = os.path.join(os.path.dirname(training_pipeline_config.artifact_dir),
                                                     MODEL_EVALUATION_DIR)
+        
+            self.model_evaluation_dir = os.path.join(model_evaluation_master_dir,
+                                                    TIMESTAMP)
             self.threshold=MODEL_EVALUATION_THRESHOLD_VALUE
             self.metric_list=MODEL_EVALUATION_METRIC_NAMES
         except Exception as e:

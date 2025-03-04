@@ -55,7 +55,6 @@ class ModelEvaluation:
             #set initial flag
             is_model_accepted, is_active = False, False
 
-
             #obtain required directory path
             trained_model_file_path = self.model_trainer_artifact.model_trainer_ref_artifact.trained_model_file_path
             label_indexer_model_path = self.model_trainer_artifact.model_trainer_ref_artifact.label_indexer_model_file_path
@@ -105,6 +104,7 @@ class ModelEvaluation:
         try:
             model_accepted = True
             is_active = True
+            logger.info("initiating model evaluation phase...")
             model_evaluation_artifact = self.evaluate_trained_model()
             return model_evaluation_artifact
         except Exception as e:
