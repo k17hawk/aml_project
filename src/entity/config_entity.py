@@ -104,3 +104,13 @@ class ModelEvaluationConfig:
             self.metric_list=MODEL_EVALUATION_METRIC_NAMES
         except Exception as e:
             raise AMLException(e,sys)
+
+class ModelPusherConfig:
+
+    def __init__(self,training_pipeline_config:TrainingPipelineConfig):
+        try:
+            self.pusher_model_dir = os.path.join(training_pipeline_config.artifact_dir,
+                                                    MODEL_PUSHER_DIR,"model",MODEL_PUSHER_MODEL_NAME)
+            self.saved_model_dir = MODEL_PUSHER_SAVED_MODEL_DIRS
+        except Exception as e:
+            raise AMLException(e,sys)

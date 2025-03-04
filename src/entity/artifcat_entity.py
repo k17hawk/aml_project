@@ -82,7 +82,7 @@ class ModelEvaluationArtifact:
     def __str__(self):
         return str(self.to_dict())
 
-# @dataclass
-# class ModelPusherArtifact:
-#     model_pushed_dir:str
-#     saved_model_dir:str
+@dataclass
+class ModelPusherArtifact:
+    model_pushed_dir:str
+    saved_model_dir:str
