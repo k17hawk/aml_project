@@ -1,10 +1,11 @@
-from src.entity.artifcat_entity import DataIngestionArtifact,DataValidationArtifact,DataTransformationArtifact
+from src.entity.artifcat_entity import DataIngestionArtifact,DataValidationArtifact,DataTransformationArtifact,ModelTrainerArtifact
 from src.entity.config_entity import DataIngestionConfig,DataValidationConfig,DataTransformationConfig
-from src.entity.config_entity import  TrainingPipelineConfig
+from src.entity.config_entity import  TrainingPipelineConfig,ModelTrainerConfig
 from src.exception import AMLException
 from src.component.data_ingestion import DataIngestion
 from src.component.data_validation import DataValidation
 from src.component.data_transformation import DataTransformation
+from src.component.model_trainer import ModelTrainer
 import os,sys
 
 
@@ -47,10 +48,22 @@ class TrainingPipeline:
         except Exception as e:
             raise AMLException(e, sys)
     
+    def start_model_trainer(self, data_transformation_artifact: DataTransformationArtifact) -> ModelTrainerArtifact:
+        try:
+            model_trainer_config = ModelTrainerConfig(training_pipeline_config=self.training_pipeline_config)
+            model_trainer = ModelTrainer(data_transformation_artifact=data_transformation_artifact,
+                                         model_trainer_config=model_trainer_config
+                                         )
+            model_trainer_artifact = model_trainer.initiate_model_training()
+            return model_trainer_artifact
+        except Exception as e:
+            raise AMLException(e, sys)
+    
     def start(self):
         try:
             data_ingestion_artifact = self.start_data_ingestion()
             data_validation_artifact = self.start_data_validation(data_ingestion_artifact=data_ingestion_artifact)
             data_transformation_artifact = self.start_data_transformation(data_validation_artifact=data_validation_artifact)
+            model_trainer_artifact = self.start_model_trainer(data_transformation_artifact=data_transformation_artifact)
         except Exception as e:
             raise AMLException(e, sys)

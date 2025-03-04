@@ -7,9 +7,10 @@ from src.logger import  logging as logger
 from src.entity.artifcat_entity import DataValidationArtifact, DataTransformationArtifact
 from src.entity.config_entity import DataTransformationConfig
 from pyspark.sql import DataFrame
-from src.ml.features import DateTimeFeatureExtractor,DropColumnsTransformer,TypeCastTransformer
+from src.ml.features import DateTimeFeatureExtractor,DropColumnsTransformer,TypeCastingTransformer
 from pyspark.sql.functions import col, rand
 import os,sys
+from functools import reduce
 
 class DataTransformation:
 
@@ -47,12 +48,6 @@ class DataTransformation:
             
             stages.append(drop_cols_transformer)
 
-            logger.info("converting data types")
-            type_cast_transformer = TypeCastTransformer(otherCols = self.schema.string_indexing_input_features,
-                                                        inputCols=self.schema.numerical_columns,
-                                                        outputCols=self.schema.numerical_out_columns,
-                                                        targetCol=self.schema.target_column)
-            stages.append(type_cast_transformer)
 
             logger.info("Applying String indxer Transformer")
             #string index 
@@ -61,14 +56,19 @@ class DataTransformation:
                 string_indexer = StringIndexer(inputCol=string_input,outputCol=string_output)
 
                 stages.append(string_indexer)
+            logger.info("converting data types")
+            type_cast_transformer = TypeCastingTransformer(inputCols=self.schema.numerical_columns + [self.schema.target_column], 
+                                      outputCols=self.schema.numerical_out_columns + [self.schema.target_column])
+            
+            stages.append(type_cast_transformer)
             logger.info("Applying vector assameber Transformer")
             
-            assembled_col = [col for col in self.schema.vector_assembler_input_cols if col!=self.schema.target_column]
+            assembled_col = [col for col in self.schema.numerical_out_columns if col!=self.schema.target_column]
             vector_assambler = VectorAssembler(inputCols=assembled_col,
                                                outputCol=self.schema.vector_assembler_out_cols)
             stages.append(vector_assambler)
-            logger.info("applyinh standard scaler")
-            print(self.schema.vector_assembler_out_cols)
+            logger.info("applying standard scaler")
+            # print(self.schema.vector_assembler_out_cols)
             standard_scaler = StandardScaler(inputCol=self.schema.vector_assembler_out_cols,
                                              outputCol=self.schema.scaled_vector_input_features)
             stages.append(standard_scaler)
@@ -143,7 +143,13 @@ class DataTransformation:
             required_columns = [self.schema.scaled_vector_input_features, self.schema.target_column]
 
             transformed_trained_dataframe = transformed_pipeline.transform(train_dataframe)
-            # print(transformed_trained_dataframe.show())
+            print(transformed_trained_dataframe.printSchema())
+            any_null = reduce(lambda a, b: a | b, (col(c).isNull() for c in transformed_trained_dataframe.columns))
+
+            has_null = transformed_trained_dataframe.filter(any_null).count() > 0
+
+            print(f"DataFrame has nulls: {has_null}")
+
             # print(transformed_trained_dataframe.show(10))
             transformed_trained_dataframe = transformed_trained_dataframe.select(required_columns)  
 
@@ -165,8 +171,8 @@ class DataTransformation:
                                                            )
 
             logger.info(f"Saving transformation pipeline at: [{export_pipeline_file_path}]")
-            print(export_pipeline_file_path)
-            print(type(transformed_pipeline))
+            # print(export_pipeline_file_path)
+            # print(type(transformed_pipeline))
             # transformed_pipeline.save(r"C:\Users\lang-chain\Documents\aml_project\testing")
             transformed_pipeline.save(export_pipeline_file_path)
             logger.info(f"Saving transformed train data at: [{transformed_train_data_file_path}]")

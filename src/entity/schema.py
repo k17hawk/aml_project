@@ -101,7 +101,7 @@ class TransactionDataSchema:
     
     @property
     def numerical_columns(self) -> List[str]:
-        return self.derived_output_features+[self.col_sender_account,self.col_receiver_account,self.col_amount]
+        return self.derived_output_features+[self.col_sender_account,self.col_receiver_account,self.col_amount]+self.string_indexing_out_features
     
     @property
     def numerical_out_columns(self) -> List[str]:
@@ -117,7 +117,7 @@ class TransactionDataSchema:
     
     @property
     def vector_assembler_input_cols(self) -> List[str]:
-        features = self.numerical_out_columns +self.string_indexing_out_features
+        features = self.numerical_out_columns 
         return features
     
     @property

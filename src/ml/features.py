@@ -8,29 +8,16 @@ from pyspark.ml.param.shared import Param, Params
 from pyspark import keyword_only
 
 
-class TypeCastTransformer(Transformer, DefaultParamsReadable, DefaultParamsWritable):
-    def __init__(self,otherCols:List[str], inputCols: List[str], outputCols: List[str], targetCol: str, targetType: str = "int"):
-        super().__init__()
-        self.othercols = otherCols
-        self.inputCols = inputCols  
-        self.outputCols = outputCols  
-        self.targetCol = targetCol  
-        self.targetType = targetType
-
-    def _transform(self, df: DataFrame) -> DataFrame:
-        # Ensuring input and output column lists match
-        if len(self.inputCols) != len(self.outputCols):
-            raise ValueError("inputCols and outputCols must have the same length!")
-      
-        # Casting input feature columns
-        casted_feature_cols = [col(inp).cast("double").alias(out) for inp, out in zip(self.inputCols, self.outputCols)]
-
-        # Casting target column separately
-        casted_target_col = col(self.targetCol).cast(self.targetType).alias(self.targetCol)
-        # Selecting all other columns that are not transformed
-        selected_other_cols = [col(c) for c in self.othercols]  
+class TypeCastingTransformer(Transformer, HasInputCols, HasOutputCols, DefaultParamsReadable, DefaultParamsWritable):
+    def __init__(self, inputCols=None, outputCols=None):
+        super(TypeCastingTransformer, self).__init__()
+        self.inputCols = inputCols
+        self.outputCols = outputCols
     
-        return df.select(*selected_other_cols,*casted_feature_cols, casted_target_col)
+    def _transform(self, dataset):
+        for input_col, output_col in zip(self.inputCols, self.outputCols):
+            dataset = dataset.withColumn(output_col, col(input_col).cast("double"))
+        return dataset
 
 
 class DropColumnsTransformer(Transformer, DefaultParamsReadable, DefaultParamsWritable):
