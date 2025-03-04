@@ -1,11 +1,13 @@
-from src.entity.artifcat_entity import DataIngestionArtifact,DataValidationArtifact,DataTransformationArtifact,ModelTrainerArtifact
+from src.entity.artifcat_entity import DataIngestionArtifact,DataValidationArtifact,DataTransformationArtifact,\
+                                       ModelTrainerArtifact,ModelEvaluationArtifact
 from src.entity.config_entity import DataIngestionConfig,DataValidationConfig,DataTransformationConfig
-from src.entity.config_entity import  TrainingPipelineConfig,ModelTrainerConfig
+from src.entity.config_entity import  TrainingPipelineConfig,ModelTrainerConfig,ModelEvaluationConfig
 from src.exception import AMLException
 from src.component.data_ingestion import DataIngestion
 from src.component.data_validation import DataValidation
 from src.component.data_transformation import DataTransformation
 from src.component.model_trainer import ModelTrainer
+from src.component.model_evaluation import ModelEvaluation
 import os,sys
 
 
@@ -59,11 +61,25 @@ class TrainingPipeline:
         except Exception as e:
             raise AMLException(e, sys)
     
+    def start_model_evaluation(self, data_validation_artifact, model_trainer_artifact) -> ModelEvaluationArtifact:
+        try:
+            model_eval_config = ModelEvaluationConfig(training_pipeline_config=self.training_pipeline_config)
+            model_eval = ModelEvaluation(data_validation_artifact=data_validation_artifact,
+                                        model_trainer_artifact=model_trainer_artifact,
+                                        model_eval_config=model_eval_config
+                                        )
+            return model_eval.initiate_model_evaluation()
+        except Exception as e:
+            raise AMLException(e, sys)
+    
     def start(self):
         try:
             data_ingestion_artifact = self.start_data_ingestion()
             data_validation_artifact = self.start_data_validation(data_ingestion_artifact=data_ingestion_artifact)
             data_transformation_artifact = self.start_data_transformation(data_validation_artifact=data_validation_artifact)
             model_trainer_artifact = self.start_model_trainer(data_transformation_artifact=data_transformation_artifact)
+            model_eval_artifact = self.start_model_evaluation(data_validation_artifact=data_validation_artifact,
+                                                              model_trainer_artifact=model_trainer_artifact
+                                                              )
         except Exception as e:
             raise AMLException(e, sys)
