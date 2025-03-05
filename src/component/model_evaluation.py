@@ -51,6 +51,7 @@ class ModelEvaluation:
                     active=True
                 )
                 return  model_evaluation_artifact
+                # logger.info(f"Model is  accepted first run{model_evaluation_artifact}")
 
             #set initial flag
             is_model_accepted, is_active = False, False
@@ -102,10 +103,13 @@ class ModelEvaluation:
 
     def initiate_model_evaluation(self) -> ModelEvaluationArtifact:
         try:
+            logger.info(f"{'>>' * 20}Starting model Evaluation.{'<<' * 20}")
             model_accepted = True
             is_active = True
-            logger.info("initiating model evaluation phase...")
             model_evaluation_artifact = self.evaluate_trained_model()
+            logger.info(f"Model evaluation artifact: {model_evaluation_artifact}")
+            # self.model_eval_artifact_data.save_eval_artifact(model_eval_artifact=model_evaluation_artifact)
+            logger.info(f"{'>>' * 20}model Evaluation completed...{'<<' * 20}")
             return model_evaluation_artifact
         except Exception as e:
             raise AMLException(e, sys)

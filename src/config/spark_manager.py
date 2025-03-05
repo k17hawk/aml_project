@@ -7,8 +7,11 @@ hadoop_home = r"C:\hadoop\hadoop-3.3.6"
 os.environ['HADOOP_HOME'] = hadoop_home
 
 # Create a Spark session with the JDBC JAR configured
-spark_session =  SparkSession.builder\
+spark_session = SparkSession.builder \
     .master('local[*]')\
-    .config("spark.driver.memory", "6g")\
+    .config("spark.driver.memory", "8g")\
+    .config("spark.executor.memory", "16g")\
+    .config("spark.sql.shuffle.partitions", "200")\
+    .config("spark.memory.fraction", "0.7")\
     .appName('AML_project')\
     .getOrCreate()
