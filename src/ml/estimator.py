@@ -61,13 +61,14 @@ class AMLIdntifierEstimator:
     def get_model(self) -> PipelineModel:
         try:
             latest_model_path = self.model_resolver.get_best_model_path()
+            if not latest_model_path:
+                raise ValueError("No valid model found in model directory.")
             if latest_model_path != self.loaded_model_path:
                 self.__loaded_model = PipelineModel.load(latest_model_path)
                 self.loaded_model_path = latest_model_path
             return self.__loaded_model
         except Exception as e:
             raise e
-
 
     def transform(self, dataframe) -> DataFrame:
         try:
