@@ -3,7 +3,7 @@ from src.entity.config_entity import ModelPusherConfig, TrainingPipelineConfig
 from src.component.model_push import ModelPusher
 from src.exception import AMLException
 import sys
-
+from src.data_access.model_trainer_artifact import ModelTrainerArtifactData
 def run_model_pusher(model_trainer_artifact: ModelTrainerArtifact):
     try:
         training_pipeline_config = TrainingPipelineConfig()
@@ -19,6 +19,6 @@ def run_model_pusher(model_trainer_artifact: ModelTrainerArtifact):
         raise AMLException(e, sys)
 
 if __name__ == "__main__":
-    model_trainer_artifact = load_model_trainer_artifact()  
-    artifact = run_model_pusher(model_trainer_artifact)
+    model_trainer_artifact_data = ModelTrainerArtifactData()
+    artifact = run_model_pusher(model_trainer_artifact_data.get_model_artifact())
     print(f"Model Push Completed: {artifact}")

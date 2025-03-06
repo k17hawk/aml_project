@@ -4,6 +4,7 @@ from src.component.data_validation import DataValidation
 from src.exception import AMLException
 import sys
 from bson.json_util import loads
+from src.data_access.data_ingestion_artifact import DataIngestionArtifactData
 
 def run_data_validation(data_ingestion_artifact: DataIngestionArtifact):
     try:
@@ -13,25 +14,17 @@ def run_data_validation(data_ingestion_artifact: DataIngestionArtifact):
             data_ingestion_artifact=data_ingestion_artifact,
             data_validation_config=data_validation_config
         )
+       
 
         data_validation_artifact = data_validation.initiate_data_validation()
-        return data_validation_artifact  # Output for next stage
+        return data_validation_artifact  
 
     except Exception as e:
         raise AMLException(e, sys)
 
-
-
-def load_data_ingestion_artifact(collection_name="artifacts"):
-    """Load the latest DataIngestionArtifact from MongoDB."""
-    artifact_data = db[collection_name].find_one(sort=[("_id", -1)])  # Get the latest artifact
-    if artifact_data:
-        return DataIngestionArtifact(**artifact_data)  # Convert back to object
-    else:
-        raise Exception("No artifact found in MongoDB!")
-
 if __name__ == "__main__":
-    data_ingestion_artifact = load_data_ingestion_artifact()  # Load artifact
+    data_ingestion_artifact_data  = DataIngestionArtifactData()
+    data_ingestion_artifact =  data_ingestion_artifact_data.get_ingestion_artifact()
     artifact = run_data_validation(data_ingestion_artifact)
     print(f"Data Validation Completed: {artifact}")
 
