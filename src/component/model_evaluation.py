@@ -10,8 +10,9 @@ from pyspark.ml.feature import StringIndexerModel
 from pyspark.ml.pipeline import PipelineModel
 from src.config.spark_manager import spark_session
 from src.utils import get_score
-
 from src.ml.estimator import  ModelResolver,AMLIdntifierEstimator
+from src.data_access.model_eval_artifact import ModelEvaluationArtifactData
+
 class ModelEvaluation:
 
     def __init__(self,
@@ -21,6 +22,8 @@ class ModelEvaluation:
                  schema=TransactionDataSchema()
                  ):
         try:
+            logger.info(f"{'>>' * 20}Starting Model Validation..{'<<' * 20}")
+            self.model_eval_artifact_data = ModelEvaluationArtifactData()
             self.data_validation_artifact = data_validation_artifact
             self.model_eval_config = model_eval_config
             self.model_trainer_artifact = model_trainer_artifact
@@ -108,7 +111,7 @@ class ModelEvaluation:
             is_active = True
             model_evaluation_artifact = self.evaluate_trained_model()
             logger.info(f"Model evaluation artifact: {model_evaluation_artifact}")
-            # self.model_eval_artifact_data.save_eval_artifact(model_eval_artifact=model_evaluation_artifact)
+            self.model_eval_artifact_data.save_eval_artifact(model_eval_artifact=model_evaluation_artifact)
             logger.info(f"{'>>' * 20}model Evaluation completed...{'<<' * 20}")
             return model_evaluation_artifact
         except Exception as e:
