@@ -7,16 +7,35 @@ class DataIngestionArtifact:
     metadata_file_path:str
     download_dir:str
 
+    def to_dict(self):
+        return asdict(self)
+
+    def __str__(self):
+        return str(self.to_dict())
+    
+
 @dataclass
 class DataValidationArtifact:
     accepted_file_path:str
     rejected_dir:str
+
+    def to_dict(self):
+        return asdict(self)
+
+    def __str__(self):
+        return str(self.to_dict())
 
 @dataclass
 class DataTransformationArtifact:
     transformed_train_file_path:str
     exported_pipeline_file_path:str
     transformed_test_file_path:str
+
+    def to_dict(self):
+        return asdict(self)
+
+    def __str__(self):
+        return str(self.to_dict())
 
 @dataclass
 class PartialModelTrainerMetricArtifact:
@@ -55,15 +74,15 @@ class ModelTrainerArtifact:
         model_trainer_artifact = ModelTrainerArtifact(model_trainer_ref_artifact,model_trainer_train_metric_artifact,model_trainer_test_metric_artifact)
         return model_trainer_artifact
 
-    def _asdict(self):
-        try:
-            response = dict()
-            response['model_trainer_ref_artifact'] = self.model_trainer_ref_artifact._asdict()
-            response['model_trainer_train_metric_artifact'] = self.model_trainer_train_metric_artifact._asdict()
-            response['model_trainer_test_metric_artifact'] = self.model_trainer_test_metric_artifact._asdict()
-            return response
-        except Exception as e:
-            raise e
+    def to_dict(self):
+        return {
+            "model_trainer_ref_artifact": self.model_trainer_ref_artifact.to_dict(),
+            "model_trainer_train_metric_artifact": self.model_trainer_train_metric_artifact.to_dict(),
+            "model_trainer_test_metric_artifact": self.model_trainer_test_metric_artifact.to_dict()
+        }
+    
+    def __str__(self):
+        return str(self.to_dict())
     
 class ModelEvaluationArtifact:
 
@@ -86,3 +105,10 @@ class ModelEvaluationArtifact:
 class ModelPusherArtifact:
     model_pushed_dir:str
     saved_model_dir:str
+    
+    def to_dict(self):
+        return  self.__dict__
+        
+
+    def __str__(self):
+        return str(self.to_dict())
