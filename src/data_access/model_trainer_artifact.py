@@ -12,5 +12,15 @@ class ModelTrainerArtifactData:
     def save_model_artifact(self, model_trainer_artifact: ModelTrainerArtifact):
         self.collection.insert_one(model_trainer_artifact.to_dict())
 
-    def get_model_artifact(self, query):
-        self.collection.find_one(query)
+    # def get_model_artifact(self, query):
+    #     self.collection.find_one(query)
+    
+    def get_model_artifact(self, query={}):
+        """Retrieve the latest ModelTrainerArtifact from MongoDB"""
+        artifact_data = self.collection.find_one(query, sort=[("_id", -1)]) 
+        
+        if artifact_data:
+            artifact_data.pop("_id", None)  
+            return ModelTrainerArtifact(**artifact_data) 
+        else:
+            raise Exception("No model puser trainer artifact found in MongoDB!")

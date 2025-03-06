@@ -11,16 +11,10 @@ def run_data_ingestion():
         data_ingestion_config = DataIngestionConfig(training_pipeline_config=training_pipeline_config)
         data_ingestion = DataIngestion(data_ingestion_config=data_ingestion_config)
         data_ingestion_artifact = data_ingestion.initiate_data_ingestion()
-
         return data_ingestion_artifact  
 
     except Exception as e:
         raise AMLException(e, sys)
-
-def save_artifact(artifact, file_path):
-    """Save artifact as a pickle file."""
-    with open(file_path, "wb") as f:
-        pickle.dump(artifact, f)
 
 
 if __name__ == "__main__":

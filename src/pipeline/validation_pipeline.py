@@ -3,6 +3,7 @@ from src.entity.config_entity import DataValidationConfig, TrainingPipelineConfi
 from src.component.data_validation import DataValidation
 from src.exception import AMLException
 import sys
+from bson.json_util import loads
 
 def run_data_validation(data_ingestion_artifact: DataIngestionArtifact):
     try:
@@ -19,8 +20,19 @@ def run_data_validation(data_ingestion_artifact: DataIngestionArtifact):
     except Exception as e:
         raise AMLException(e, sys)
 
+
+
+def load_data_ingestion_artifact(collection_name="artifacts"):
+    """Load the latest DataIngestionArtifact from MongoDB."""
+    artifact_data = db[collection_name].find_one(sort=[("_id", -1)])  # Get the latest artifact
+    if artifact_data:
+        return DataIngestionArtifact(**artifact_data)  # Convert back to object
+    else:
+        raise Exception("No artifact found in MongoDB!")
+
 if __name__ == "__main__":
-    # Load previous stage artifact (from file, database, etc.)
-    data_ingestion_artifact = load_data_ingestion_artifact()  # Implement this function
+    data_ingestion_artifact = load_data_ingestion_artifact()  # Load artifact
     artifact = run_data_validation(data_ingestion_artifact)
     print(f"Data Validation Completed: {artifact}")
+
+

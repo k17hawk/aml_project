@@ -11,5 +11,15 @@ class DataIngestionArtifactData:
     def save_ingestion_artifact(self, data_ingestion_artifact: DataIngestionArtifact):
         self.collection.insert_one(data_ingestion_artifact.to_dict())
 
-    def get_ingestion_artifact(self, query):
-        self.collection.find_one(query)
+    # def get_ingestion_artifact(self, query):
+    #     self.collection.find_one(query)
+    
+    def get_ingestion_artifact(self, query={}):
+        """Retrieve the latest DataIngestionArtifact from MongoDB"""
+        artifact_data = self.collection.find_one(query, sort=[("_id", -1)]) 
+        
+        if artifact_data:
+            artifact_data.pop("_id", None)  
+            return DataIngestionArtifact(**artifact_data) 
+        else:
+            raise Exception("No Data Ingestion artifact found in MongoDB!")
