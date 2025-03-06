@@ -9,4 +9,6 @@ tqdm
 pyarrow
 venv-pack 
 xgboost
+pymongo
+
 # -e .
