@@ -8,7 +8,7 @@ from src.config.spark_manager import spark_session
 import pyodbc
 from tqdm import tqdm
 from src.entity.artifcat_entity import DataIngestionArtifact
-
+from src.data_access.data_ingestion_artifact import DataIngestionArtifactData
 class DataIngestion:
 
         # Used to download data in chunks.
@@ -19,6 +19,7 @@ class DataIngestion:
         try:
             logger.info(f"{'>>' * 20}Starting data ingestion.{'<<' * 20}")
             self.data_ingestion_config = data_ingestion_config
+            self.data_ingestion_artifact_data = DataIngestionArtifactData()
 
         except Exception as e:
             raise AMLException(e, sys)
@@ -119,11 +120,13 @@ class DataIngestion:
                     metadata_file_path=self.data_ingestion_config.metadata_file_path,
 
                 )
+            self.data_ingestion_artifact_data.save_ingestion_artifact(data_ingestion_artifact=artifact)
             # artifact = DataIngestionArtifact(
             #     feature_store_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\feature_store\Transaction",
             #     metadata_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion",
             #     download_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\20250301_104259\downloaded_files"
             # )
+            logger.info(f"{'>>' * 20}Data Ingestion completed.{'<<' * 20}")
             logger.info(f"Data ingestion artifact: {artifact}")
             return artifact
         except Exception as e:

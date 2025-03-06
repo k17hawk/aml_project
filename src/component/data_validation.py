@@ -15,7 +15,7 @@ from src.logger import  logger
 
 from pyspark.sql.functions import lit
 from src.entity.artifcat_entity import DataValidationArtifact
-
+from src.data_access.data_validation_artifact import DataValidationArtifactData
 
 ERROR_MESSAGE = "error_msg"
 MissingReport = namedtuple("MissingReport", ["total_row", "missing_row", "missing_percentage"])
@@ -29,6 +29,8 @@ class DataValidation():
                  schema=TransactionDataSchema()
                 ):
         try:
+            logger.info(f"{'>>' * 20}Starting data validation.{'<<' * 20}")
+            self.data_validation_artifact_data = DataValidationArtifactData()
             self.data_ingestion_artifact: DataIngestionArtifact = data_ingestion_artifact
             self.data_validation_config = data_validation_config
             self.schema = schema
@@ -145,7 +147,9 @@ class DataValidation():
             artifact = DataValidationArtifact(accepted_file_path=accepted_file_path,
                                               rejected_dir=self.data_validation_config.rejected_data_dir
                                               )
+            self.data_validation_artifact_data.save_validation_artifact(data_valid_artifact=artifact)
             logger.info(f"Data validation artifact: [{artifact}]")
+            logger.info(f"{'>>' * 20} Data Validation completed.{'<<' * 20}")
             # artifact = DataValidationArtifact(
             #     accepted_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_validation\20250302_161803\accepted_data\aml_prediction",
             #     rejected_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion"
