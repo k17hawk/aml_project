@@ -11,7 +11,7 @@ from src.ml.features import DateTimeFeatureExtractor,DropColumnsTransformer,Type
 from pyspark.sql.functions import col, rand
 import os,sys
 from functools import reduce
-
+from data_access.data_transformation_artifact import DataTransformationArtifactData
 class DataTransformation:
 
     def __init__(self, data_validation_artifact: DataValidationArtifact,
@@ -19,6 +19,8 @@ class DataTransformation:
                  schema=TransactionDataSchema()
                  ):
         try:
+            logger.info(f"{'>>' * 20}Starting data transformation.{'<<' * 20}")
+            self.data_transformation_data = DataTransformationArtifactData()
             self.data_val_artifact = data_validation_artifact
             self.data_tf_config = data_transformation_config
             self.schema = schema
@@ -190,7 +192,8 @@ class DataTransformation:
 
             )
 
-            logger.info(f"Data transformation artifact: [{data_tf_artifact}]")
+            self.data_transformation_data.save_transformation_artifact(data_transformation_artifact=data_tf_artifact)
+            logger.info(f"{'>>' * 20} Data Transformation completed.{'<<' * 20}")
             return data_tf_artifact
             
             
