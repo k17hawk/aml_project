@@ -7,11 +7,13 @@ from src.entity.artifcat_entity import ModelPusherArtifact, ModelTrainerArtifact
 from src.ml.estimator import ModelResolver
 from pyspark.ml.pipeline import PipelineModel
 import os
-
+from src.data_access.model_push_artifact import ModelPusherArtifactData
 class ModelPusher:
 
     def __init__(self, model_trainer_artifact: ModelTrainerArtifact, model_pusher_config: ModelPusherConfig):
+        logger.info(f"{'>>' * 20}Starting Model pusher.{'<<' * 20}")
         self.model_trainer_artifact = model_trainer_artifact
+        self.model_pusher_artifact_data = ModelPusherArtifactData()
         self.model_pusher_config = model_pusher_config
         self.model_resolver = ModelResolver(model_dir=self.model_pusher_config.saved_model_dir)
 
@@ -32,7 +34,9 @@ class ModelPusher:
             saved_model_path = self.push_model()
             model_pusher_artifact = ModelPusherArtifact(model_pushed_dir=self.model_pusher_config.pusher_model_dir,
                                     saved_model_dir=saved_model_path)
+            self.model_pusher_artifact_data.save_pusher_artifact(model_pusher_artifact = model_pusher_artifact)
             logger.info(f"Model pusher artifact: {model_pusher_artifact}")
+            logger.info(f"{'>>' * 20} Model pusher completed.{'<<' * 20}")
             return model_pusher_artifact
         except Exception as e:
             raise AMLException(e, sys)
