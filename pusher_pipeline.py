@@ -20,5 +20,5 @@ def run_model_pusher(model_trainer_artifact: ModelTrainerArtifact):
 
 if __name__ == "__main__":
     model_trainer_artifact_data = ModelTrainerArtifactData()
-    artifact = run_model_pusher(model_trainer_artifact_data.get_model_artifact())
+    artifact = run_model_pusher(model_trainer_artifact_data.get_trainer_artifact())
     print(f"Model Push Completed: {artifact}")

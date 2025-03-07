@@ -24,7 +24,6 @@ def run_model_evaluation(data_validation_artifact: DataValidationArtifact, model
 
 if __name__ == "__main__":
     load_data_validation_artifact = DataValidationArtifactData().get_valid_artifact()
-    load_model_trainer_artifact = ModelTrainerArtifactData().get_model_artifact()
-    model_trainer_artifact = load_model_trainer_artifact()  
-    artifact = run_model_evaluation(load_data_validation_artifact, model_trainer_artifact)
+    load_model_trainer_artifact = ModelTrainerArtifactData().get_trainer_artifact()
+    artifact = run_model_evaluation(load_data_validation_artifact, load_model_trainer_artifact)
     print(f"Model Evaluation Completed: {artifact}")

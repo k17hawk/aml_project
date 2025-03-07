@@ -39,19 +39,21 @@ class DataTransformationArtifact:
 
 @dataclass
 class PartialModelTrainerMetricArtifact:
-    f1_score:float
-    precision_score:float
-    recall_score:float
+    f1_score: float
+    precision_score: float
+    recall_score: float
 
-    def _asdict(self):
+    def to_dict(self):
         return self.__dict__
+
+
 
 @dataclass
 class PartialModelTrainerRefArtifact:
     trained_model_file_path:str
     label_indexer_model_file_path:str
 
-    def _asdict(self):
+    def to_dict(self):
         return self.__dict__
 
 

@@ -17,10 +17,11 @@ class DataValidationArtifactData:
     
     def get_valid_artifact(self, query={}):
         """Retrieve the latest DataValidationArtifact from MongoDB"""
-        artifact_data = self.collection.find_one(query, sort=[("_id", -1)])  # Get latest record
+        artifact_data = self.collection.find_one(query, sort=[("_id", -1)]) 
         
         if artifact_data:
             artifact_data.pop("_id", None) 
             return DataValidationArtifact(**artifact_data)  
         else:
             raise Exception("No data validation artifact found in MongoDB!")
+    
