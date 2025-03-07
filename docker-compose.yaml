@@ -14,6 +14,7 @@ services:
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
     networks:
       - airflow-network
+    entrypoint: ["/bin/sh", "-c", "chmod +x /app/start.sh && /app/start.sh"]
 
 networks:
   airflow-network:
