@@ -1,32 +1,22 @@
-{{- if .Values.autoscaling.enabled }}
+{{- if .Values.autoscaling.enabled | default false | not }}
+# Skip the HPA section if autoscaling is disabled or not defined
+{{- else }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "pipelinechart.fullname" . }}
-  labels:
-    {{- include "pipelinechart.labels" . | nindent 4 }}
+  name: my-app-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "pipelinechart.fullname" . }}
+    name: my-app
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
           averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-    {{- end }}
-    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
-    {{- end }}
 {{- end }}
