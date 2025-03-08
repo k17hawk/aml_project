@@ -8,7 +8,7 @@ os.environ['HADOOP_HOME'] = hadoop_home
 spark_session = SparkSession.builder \
     .master('local[*]')\
     .config("spark.driver.memory", "4g")\
-    .config("spark.executor.memory", "24g")\
+    .config("spark.executor.memory", "16g")\
     .config("spark.sql.shuffle.partitions", "200")\
     .config("spark.memory.fraction", "0.5")\
     .appName('AML_project')\

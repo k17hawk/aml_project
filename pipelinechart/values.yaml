@@ -6,13 +6,6 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
-spark:
-  master: "k8s://https://kubernetes.default.svc.cluster.local"
-  driverMemory: "4g"
-  executorMemory: "24g"
-  executorCores: 4
-  totalExecutors: 3
-
 sqlserver:
   host: "192.168.0.23"
   port: "1433"
@@ -47,3 +40,13 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
+
+resources:
+  limits:
+    memory: "16Gi"  
+  requests:
+    memory: "2Gi"  
+
+tolerations: []
+nodeSelector: {}
+affinity: {}

@@ -5,7 +5,6 @@ metadata:
   name: my-app
 spec:
   replicas: {{ .Values.replicaCount }}
-
   selector:
     matchLabels:
       app: my-app
@@ -15,36 +14,11 @@ spec:
         app: my-app
     spec:
       containers:
-        - name: spark-driver
+        - name: my-app-container
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
 
-          command: ["spark-submit"]
-          args:
-            - "--master"
-            - "{{ .Values.spark.master }}"
-            - "--deploy-mode"
-            - "cluster"
-            - "--conf"
-            - "spark.driver.memory={{ .Values.spark.driverMemory }}"
-            - "--conf"
-            - "spark.executor.memory={{ .Values.spark.executorMemory }}"
-            - "--conf"
-            - "spark.executor.cores={{ .Values.spark.executorCores }}"
-            - "/app/main.py"
-
           env:
-            - name: SPARK_MASTER
-              value: "{{ .Values.spark.master }}"
-            - name: SPARK_DRIVER_MEMORY
-              value: "{{ .Values.spark.driverMemory }}"
-            - name: SPARK_EXECUTOR_MEMORY
-              value: "{{ .Values.spark.executorMemory }}"
-            - name: SPARK_EXECUTOR_CORES
-              value: "{{ .Values.spark.executorCores }}"
-            - name: SPARK_TOTAL_EXECUTORS
-              value: "{{ .Values.spark.totalExecutors }}"
-
             - name: SQL_SERVER
               value: "{{ .Values.sqlserver.host }},{{ .Values.sqlserver.port }}"
             - name: SQL_DATABASE
@@ -67,3 +41,9 @@ spec:
                 secretKeyRef:
                   name: "{{ .Values.mongodb.secretName }}"
                   key: "{{ .Values.mongodb.secretKey }}"
+
+          resources:
+            limits:
+              memory: "{{ .Values.resources.limits.memory }}"
+            requests:
+              memory: "{{ .Values.resources.requests.memory }}"
