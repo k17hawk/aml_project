@@ -175,3 +175,5 @@ cython_debug/
 /Data
 /tmp
 /logs
+/artifact
+/saved_models
