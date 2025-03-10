@@ -1,5 +1,5 @@
-
 from src.exception import AMLException
+from src.config.spark_manager import spark_session
 import sys
 from src.logger import logging as  logger
 from src.entity.config_entity import ModelPusherConfig
@@ -40,3 +40,6 @@ class ModelPusher:
             return model_pusher_artifact
         except Exception as e:
             raise AMLException(e, sys)
+        finally:
+            logger.info("Stopping Spark Session...")
+            spark_session.stop() 

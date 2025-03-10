@@ -44,7 +44,7 @@ class DataValidation():
             )
             
             logger.info(f"Data frame is created using file: {self.data_ingestion_artifact.feature_store_file_path}")
-            logger.info(f"Number of row: {dataframe.count()} and column: {len(dataframe.columns)}")
+            # logger.info(f"Number of row: {dataframe.count()} and column: {len(dataframe.columns)}")
             return dataframe
         except Exception as e:
             raise AMLException(e, sys)

@@ -42,8 +42,17 @@ spec:
                   name: "{{ .Values.mongodb.secretName }}"
                   key: "{{ .Values.mongodb.secretKey }}"
 
+          volumeMounts:
+            - mountPath: /app/artifact  # This is where  folders will be created
+              name: artifact-storage
+
           resources:
             limits:
               memory: "{{ .Values.resources.limits.memory }}"
             requests:
               memory: "{{ .Values.resources.requests.memory }}"
+
+      volumes:
+        - name: artifact-storage
+          persistentVolumeClaim:
+            claimName: my-app-pvc  

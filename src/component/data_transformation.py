@@ -59,8 +59,8 @@ class DataTransformation:
 
                 stages.append(string_indexer)
             logger.info("converting data types")
-            type_cast_transformer = TypeCastingTransformer(inputCols=self.schema.numerical_columns + [self.schema.target_column], 
-                                      outputCols=self.schema.numerical_out_columns + [self.schema.target_column])
+            type_cast_transformer = TypeCastingTransformer(inputCols=self.schema.numerical_columns, 
+                                      outputCols=self.schema.numerical_out_columns )
             
             stages.append(type_cast_transformer)
             logger.info("Applying vector assameber Transformer")
@@ -128,29 +128,30 @@ class DataTransformation:
             logger.info(f">>>>>>>>>>>Started data transformation <<<<<<<<<<<<<<<")
             dataframe: DataFrame = self.read_data()
             dataframe = self.get_balanced_shuffled_dataframe(dataframe=dataframe)
-            logger.info(f"Number of row: [{dataframe.count()}] and column: [{len(dataframe.columns)}]")
+            # logger.info(f"Number of row: [{dataframe.count()}] and column: [{len(dataframe.columns)}]")
 
             test_size = self.data_tf_config.test_size
             logger.info(f"Splitting dataset into train and test set using ration: {1 - test_size}:{test_size}")
             train_dataframe, test_dataframe = dataframe.randomSplit([1 - test_size, test_size])
-            logger.info(f"Train dataset has number of row: [{train_dataframe.count()}] and"
-                        f" column: [{len(train_dataframe.columns)}]")
+            # logger.info(f"Train dataset has number of row: [{train_dataframe.count()}] and"
+            #             f" column: [{len(train_dataframe.columns)}]")
 
-            logger.info(f"Test dataset has number of row: [{test_dataframe.count()}] and"
-                        f" column: [{len(test_dataframe.columns)}]")
+            # logger.info(f"Test dataset has number of row: [{test_dataframe.count()}] and"
+            #             f" column: [{len(test_dataframe.columns)}]")
             
+            # print(train_dataframe.printSchema())
             pipeline = self.get_data_transformation_pipeline()
             transformed_pipeline = pipeline.fit(train_dataframe)
 
             required_columns = [self.schema.scaled_vector_input_features, self.schema.target_column]
 
             transformed_trained_dataframe = transformed_pipeline.transform(train_dataframe)
-            print(transformed_trained_dataframe.printSchema())
-            any_null = reduce(lambda a, b: a | b, (col(c).isNull() for c in transformed_trained_dataframe.columns))
+            # print(transformed_trained_dataframe.printSchema())
+            # any_null = reduce(lambda a, b: a | b, (col(c).isNull() for c in transformed_trained_dataframe.columns))
 
-            has_null = transformed_trained_dataframe.filter(any_null).count() > 0
+            # has_null = transformed_trained_dataframe.filter(any_null).count() > 0
 
-            print(f"DataFrame has nulls: {has_null}")
+            # print(f"DataFrame has nulls: {has_null}")
 
             # print(transformed_trained_dataframe.show(10))
             transformed_trained_dataframe = transformed_trained_dataframe.select(required_columns)  
@@ -178,11 +179,11 @@ class DataTransformation:
             # transformed_pipeline.save(r"C:\Users\lang-chain\Documents\aml_project\testing")
             transformed_pipeline.save(export_pipeline_file_path)
             logger.info(f"Saving transformed train data at: [{transformed_train_data_file_path}]")
-            print(transformed_trained_dataframe.count(), len(transformed_trained_dataframe.columns))
+            # print(transformed_trained_dataframe.count(), len(transformed_trained_dataframe.columns))
             transformed_trained_dataframe.write.parquet(transformed_train_data_file_path)
 
             logger.info(f"Saving transformed test data at: [{transformed_test_data_file_path}]")
-            print(transformed_test_dataframe.count(), len(transformed_trained_dataframe.columns))
+            # print(transformed_test_dataframe.count(), len(transformed_trained_dataframe.columns))
             transformed_test_dataframe.write.parquet(transformed_test_data_file_path)
 
             data_tf_artifact = DataTransformationArtifact(
@@ -199,3 +200,4 @@ class DataTransformation:
             
         except Exception as e:
             raise AMLException(e,sys)
+        

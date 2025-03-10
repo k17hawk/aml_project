@@ -1,5 +1,4 @@
 FROM ubuntu:22.04
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
@@ -82,4 +81,4 @@ WORKDIR /app/
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Default command to start  Python script
-CMD ["spark-submit", "ingestion_pipeline.py"]
+CMD ["spark-submit", "main.py"]

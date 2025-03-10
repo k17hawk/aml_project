@@ -36,7 +36,7 @@ class ModelTrainer:
             test_file_path = self.data_transformation_artifact.transformed_test_file_path
             train_dataframe: DataFrame = spark_session.read.parquet(train_file_path)
             test_dataframe: DataFrame = spark_session.read.parquet(test_file_path)
-            print(f"Train row: {train_dataframe.count()} Test row: {test_dataframe.count()}")
+            # print(f"Train row: {train_dataframe.count()} Test row: {test_dataframe.count()}")
             dataframes: List[DataFrame] = [train_dataframe, test_dataframe]
             return dataframes
         except Exception as e:
@@ -111,7 +111,7 @@ class ModelTrainer:
             dataframes = self.get_train_test_dataframe()
             train_dataframe, test_dataframe = dataframes[0], dataframes[1]
 
-            print(f"Train row: {train_dataframe.count()} Test row: {test_dataframe.count()}")
+            # print(f"Train row: {train_dataframe.count()} Test row: {test_dataframe.count()}")
             label_indexer = StringIndexer(inputCol=self.schema.target_column,
                                           outputCol=self.schema.target_indexed_label)
             label_indexer_model = label_indexer.fit(train_dataframe)
@@ -128,7 +128,7 @@ class ModelTrainer:
             train_dataframe_pred = trained_model.transform(train_dataframe)
             test_dataframe_pred = trained_model.transform(test_dataframe)
 
-            print(f"number of row in training: {train_dataframe_pred.count()}")
+            # print(f"number of row in training: {train_dataframe_pred.count()}")
             scores = self.get_scores(dataframe=train_dataframe_pred,metric_names=self.model_trainer_config.metric_list)
             train_metric_artifact = PartialModelTrainerMetricArtifact(f1_score=scores[0][1],
                                                                       precision_score=scores[1][1],
@@ -136,7 +136,7 @@ class ModelTrainer:
             logger.info(f"Model trainer train metric: {train_metric_artifact}")
 
 
-            print(f"number of row in training: {test_dataframe_pred.count()}")
+            # print(f"number of row in training: {test_dataframe_pred.count()}")
             scores = self.get_scores(dataframe=test_dataframe_pred,metric_names=self.model_trainer_config.metric_list)
             test_metric_artifact = PartialModelTrainerMetricArtifact(f1_score=scores[0][1],
                                                                      precision_score=scores[1][1],

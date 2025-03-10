@@ -101,4 +101,3 @@ class DateTimeFeatureExtractor(Transformer, HasInputCols, HasOutputCols,
                              .withColumn("second", second(col(time_col)))
         
         return dataframe
-

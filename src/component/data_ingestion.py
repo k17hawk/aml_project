@@ -120,19 +120,15 @@ class DataIngestion:
                     metadata_file_path=self.data_ingestion_config.metadata_file_path,
 
                 )
-            self.data_ingestion_artifact_data.save_ingestion_artifact(data_ingestion_artifact=artifact)
+            
             # artifact = DataIngestionArtifact(
             #     feature_store_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\feature_store\Transaction",
             #     metadata_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion",
-            #     download_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\20250301_104259\downloaded_files"
+            #     download_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\20250310_135414\downloaded_files"
             # )
+            self.data_ingestion_artifact_data.save_ingestion_artifact(data_ingestion_artifact=artifact)
             logger.info(f"{'>>' * 20}Data Ingestion completed.{'<<' * 20}")
             logger.info(f"Data ingestion artifact: {artifact}")
             return artifact
         except Exception as e:
             raise AMLException(e, sys)
-
-
-    
-
-
