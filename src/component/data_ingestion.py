@@ -9,25 +9,21 @@ import pyodbc
 from tqdm import tqdm
 from src.entity.artifcat_entity import DataIngestionArtifact
 from src.data_access.data_ingestion_artifact import DataIngestionArtifactData
+
 class DataIngestion:
 
-        # Used to download data in chunks.
-    def __init__(self, data_ingestion_config: DataIngestionConfig ):
-        """
-        data_ingestion_config: Data Ingestion config
-        """
+    def __init__(self,data_ingestion_config:DataIngestionConfig,n_retry: int = 5):
         try:
             logger.info(f"{'>>' * 20}Starting data ingestion.{'<<' * 20}")
-            self.data_ingestion_config = data_ingestion_config
             self.data_ingestion_artifact_data = DataIngestionArtifactData()
-
+            self.data_ingestion_config = data_ingestion_config
+            
         except Exception as e:
-            raise AMLException(e, sys)
-    
+            raise AMLException(e,sys)
     def connect(self,server,database,username,password):
         """Establishes a connection to the SQL Server database, creating it if it doesn't exist."""
         try:
-           
+
             self.connection = pyodbc.connect(
                 f'DRIVER={{ODBC Driver 18 for SQL Server}};'
                 f'SERVER={server};'
@@ -58,6 +54,25 @@ class DataIngestion:
                 pbar.update(len(chunk))  
         logger.info(f"writing to csv completed at {file_path}")
         return file_path
+        
+    
+    
+    def convert_files_to_parquet(self,fetched_file_path ) -> str:
+        try:
+            logger.info(f"converting file into parquet...")
+            data_dir = self.data_ingestion_config.feature_store_dir
+            output_file_name = f"{self.data_ingestion_config.file_name}"
+            os.makedirs(data_dir, exist_ok=True)
+            file_path = os.path.join(data_dir, output_file_name)
+            logger.info(f"Parquet file will be created at: {file_path}")
+            df = spark_session.read.csv(fetched_file_path, header=True, inferSchema=True,multiLine=True)
+            if df.count() > 0:
+                df.write.mode("overwrite").parquet(file_path)
+                logger.info("Conversion to Parquet completed successfully.")
+
+            return file_path
+        except Exception as e:
+            raise AMLException(e, sys)
     
     def write_metadata(self, file_path: str) -> None:
         """
@@ -75,26 +90,7 @@ class DataIngestion:
             logger.info(f"Metadata has been written.")
         except Exception as e:
             raise AMLException(e, sys)
-        
-    def convert_files_to_parquet(self,fetched_file_path ) -> str:
-        try:
-            logger.info(f"converting file into parquet...")
-            data_dir = self.data_ingestion_config.feature_store_dir
-            output_file_name = f"{self.data_ingestion_config.file_name}"
-            os.makedirs(data_dir, exist_ok=True)
-            file_path = os.path.join(data_dir, output_file_name)
-
-            logger.info(f"Parquet file will be created at: {file_path}")
-
-            df = spark_session.read.csv(fetched_file_path, header=True, inferSchema=True,multiLine=True)
-            if df.count() > 0:
-                df.write.mode("overwrite").parquet(file_path)
-                logger.info("Conversion to Parquet completed successfully.")
-
-            return file_path
-        except Exception as e:
-            raise AMLException(e, sys)
-        
+    
     def initiate_data_ingestion(self):
         try:
             datasource_url: str = self.data_ingestion_config.datasource_url
@@ -120,13 +116,13 @@ class DataIngestion:
                     metadata_file_path=self.data_ingestion_config.metadata_file_path,
 
                 )
-            
+            self.data_ingestion_artifact_data.save_ingestion_artifact(data_ingestion_artifact=artifact)
             # artifact = DataIngestionArtifact(
             #     feature_store_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\feature_store\Transaction",
             #     metadata_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion",
-            #     download_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\20250310_135414\downloaded_files"
+            #     download_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\20250301_104259\downloaded_files"
             # )
-            self.data_ingestion_artifact_data.save_ingestion_artifact(data_ingestion_artifact=artifact)
+
             logger.info(f"{'>>' * 20}Data Ingestion completed.{'<<' * 20}")
             logger.info(f"Data ingestion artifact: {artifact}")
             return artifact

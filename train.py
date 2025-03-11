@@ -4,7 +4,7 @@ from src.entity.artifcat_entity import DataIngestionArtifact, DataValidationArti
     ModelTrainerArtifact, ModelEvaluationArtifact, ModelPusherArtifact
 from src.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig, DataValidationConfig, \
     DataTransformationConfig, ModelEvaluationConfig, ModelTrainerConfig, ModelPusherConfig
-from src.component.data_ingestion import DataIngestion
+from component.data_ingestion3 import DataIngestion
 from src.component.data_validation import DataValidation
 from src.component.data_transformation import DataTransformation
 from src.component.model_evaluation import ModelEvaluation

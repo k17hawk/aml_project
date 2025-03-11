@@ -3,7 +3,7 @@ from src.entity.artifcat_entity import DataIngestionArtifact,DataValidationArtif
 from src.entity.config_entity import DataIngestionConfig,DataValidationConfig,DataTransformationConfig
 from src.entity.config_entity import  TrainingPipelineConfig,ModelTrainerConfig,ModelEvaluationConfig,ModelPusherConfig
 from src.exception import AMLException
-from src.component.data_ingestion import DataIngestion
+from component.data_ingestion import DataIngestion
 from src.component.data_validation import DataValidation
 from src.component.data_transformation import DataTransformation
 from src.component.model_trainer import ModelTrainer

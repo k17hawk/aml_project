@@ -17,10 +17,13 @@ class ModelTrainerArtifactData:
     
     def get_trainer_artifact(self, query={}):
         """Retrieve the latest ModelTrainerArtifact from MongoDB"""
-        artifact_data = self.collection.find_one(query, sort=[("_id", -1)]) 
-        
+        artifact_data = self.collection.find_one(query, sort=[("_id", -1)])
+
         if artifact_data:
             artifact_data.pop("_id", None) 
             return ModelTrainerArtifact.construct_object(**artifact_data)  
         else:
             raise Exception("No model trainer artifact found in MongoDB!")
+
+        
+        

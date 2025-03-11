@@ -68,13 +68,6 @@ class ModelTrainerArtifact:
         self.model_trainer_test_metric_artifact = model_trainer_test_metric_artifact
 
 
-    @staticmethod
-    def construct_object(**kwargs):
-        model_trainer_ref_artifact=PartialModelTrainerRefArtifact(**(kwargs['model_trainer_ref_artifact']))
-        model_trainer_train_metric_artifact=PartialModelTrainerMetricArtifact(**(kwargs['model_trainer_train_metric_artifact']))
-        model_trainer_test_metric_artifact=PartialModelTrainerMetricArtifact(**(kwargs['model_trainer_test_metric_artifact']))
-        model_trainer_artifact = ModelTrainerArtifact(model_trainer_ref_artifact,model_trainer_train_metric_artifact,model_trainer_test_metric_artifact)
-        return model_trainer_artifact
 
     def to_dict(self):
         return {
@@ -85,6 +78,27 @@ class ModelTrainerArtifact:
     
     def __str__(self):
         return str(self.to_dict())
+    
+    @staticmethod
+    def construct_object(**kwargs):
+        """Convert dictionary from MongoDB into ModelTrainerArtifact object"""
+
+        def convert_to_object(class_type, value):
+            """Helper function to convert dictionary to object if needed"""
+            return class_type(**value) if isinstance(value, dict) else value
+
+        # Convert nested dictionaries into objects
+        model_trainer_ref_artifact = convert_to_object(PartialModelTrainerRefArtifact, kwargs.get('model_trainer_ref_artifact', {}))
+        model_trainer_train_metric_artifact = convert_to_object(PartialModelTrainerMetricArtifact, kwargs.get('model_trainer_train_metric_artifact', {}))
+        model_trainer_test_metric_artifact = convert_to_object(PartialModelTrainerMetricArtifact, kwargs.get('model_trainer_test_metric_artifact', {}))
+
+        # Return the actual object
+        return ModelTrainerArtifact(
+            model_trainer_ref_artifact=model_trainer_ref_artifact,
+            model_trainer_train_metric_artifact=model_trainer_train_metric_artifact,
+            model_trainer_test_metric_artifact=model_trainer_test_metric_artifact
+        )
+
     
 class ModelEvaluationArtifact:
 
