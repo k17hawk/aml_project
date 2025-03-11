@@ -17,9 +17,9 @@ from datetime import datetime
 
 
 #developer env
-# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("C:/Users/lang-chain/Documents/aml_project/datastorage.json"))
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("C:/Users/lang-chain/Documents/aml_project/cloud-api.json"))
 #docker env
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("datastorage.json"))
+# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("cloud-api.json"))
 
 
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")

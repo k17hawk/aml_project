@@ -2,10 +2,7 @@ from DB import DatabaseConnector
 from constants import *
 import pandas as pd
 import pyodbc
-
 import os
-import pandas as pd
-import pyodbc
 from google.cloud import storage
 from io import StringIO
 

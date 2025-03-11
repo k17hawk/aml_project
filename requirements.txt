@@ -10,5 +10,5 @@ pyarrow
 venv-pack 
 xgboost
 pymongo
-
+kafka-python
 # -e .
