@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Flask Training App</title>
+    <script>
+        function sendRequest(endpoint) {
+            fetch(endpoint, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => alert(data.message))
+                .catch(error => alert('Error: ' + error));
+        }
+    </script>
+</head>
+<body>
+    <h1>Flask Training and Prediction App</h1>
+    <button onclick="sendRequest('/train')">Start Training</button>
+    <button onclick="sendRequest('/predict')">Make Prediction</button>
+</body>
+</html>

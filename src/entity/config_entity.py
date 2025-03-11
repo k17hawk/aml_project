@@ -114,3 +114,20 @@ class ModelPusherConfig:
             self.saved_model_dir = MODEL_PUSHER_SAVED_MODEL_DIRS
         except Exception as e:
             raise AMLException(e,sys)
+
+
+class BatchPredictionConfig:
+    def __init__(self):
+        try:
+            self.inbox_dir = os.path.join("data","j")
+            self.outbox_dir = os.path.join("data","output-outbox")
+            self.archive_dir = os.path.join("data","archive")
+            self.parquet_dir = os.path.join("data",'parquet_input')
+            self.csv_dir = os.path.join("data","csv_output")
+            
+            os.makedirs(self.outbox_dir ,exist_ok=True)
+            os.makedirs(self.archive_dir,exist_ok=True)
+            os.makedirs(self.parquet_dir,exist_ok=True)
+            os.makedirs(self.csv_dir,exist_ok=True)
+        except Exception as e:
+            raise AMLException(e, sys)
