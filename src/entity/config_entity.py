@@ -1,11 +1,11 @@
 import os,sys
 from dataclasses import dataclass
 from datetime import datetime
-from exception import AMLException
-from constants import TIMESTAMP,DATA_INGESTION_DIR,DATA_INGESTION_METADATA_FILE_NAME,DATA_INGESTION_DOWNLOADED_DATA_DIR,\
+from src.exception import AMLException
+from src.constants import TIMESTAMP,DATA_INGESTION_DIR,DATA_INGESTION_METADATA_FILE_NAME,DATA_INGESTION_DOWNLOADED_DATA_DIR,\
     DATA_INGESTION_FAILED_DIR,DATA_INGESTION_FILE_NAME,DATA_INGESTION_FEATURE_STORE_DIR,SQL_SERVER,\
     SQL_DATABASE,SQL_USERNAME,SQL_PASSWORD,TABLE_NAME
-from constants import *
+from src.constants import *
 from .metadeta_info import DataIngestionMetadata
 
 #training pipeline config
@@ -123,11 +123,11 @@ class BatchPredictionConfig:
             self.outbox_dir = os.path.join("data","output-outbox")
             self.archive_dir = os.path.join("data","archive")
             self.parquet_dir = os.path.join("data",'parquet_input')
-            self.csv_dir = os.path.join("data","csv_output")
+            # self.csv_dir = os.path.join("data","csv_output")
             
             os.makedirs(self.outbox_dir ,exist_ok=True)
             os.makedirs(self.archive_dir,exist_ok=True)
             os.makedirs(self.parquet_dir,exist_ok=True)
-            os.makedirs(self.csv_dir,exist_ok=True)
+            # os.makedirs(self.csv_dir,exist_ok=True)
         except Exception as e:
             raise AMLException(e, sys)

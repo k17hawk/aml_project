@@ -1,4 +1,4 @@
-from exception import AMLException
+from src.exception import AMLException
 from src.logger import logging
 from src.utils import read_yaml_file,write_yaml_file
 from collections import namedtuple

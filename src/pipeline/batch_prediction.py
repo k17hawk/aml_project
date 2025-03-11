@@ -31,5 +31,7 @@ class BatchPrediction:
 
                 archive_file_path = os.path.join(self.batch_config.archive_dir,f"{file_name}_{TIMESTAMP}")
                 df.write.parquet(archive_file_path)
+                os.remove(data_file_path)
+            logging.info(f"Processed and deleted file: {data_file_path}")
         except Exception as e:
             raise AMLException(e, sys)
