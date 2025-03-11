@@ -8,9 +8,9 @@ logger = logging.getLogger(__name__)
 
 @dag(
     schedule_interval="0 */6 * * *",  # Every 6 hours
-    start_date=pendulum.datetime(2023, 10, 1, tz="UTC"),  # Start date
-    catchup=False,  # No backfilling
-    tags=["kafka_producer_consumer"],  # Tags for better organization
+    start_date=pendulum.datetime(2023, 10, 1, tz="UTC"), 
+    catchup=False, 
+    tags=["kafka_producer_consumer"],  
 )
 def kafka_producer_consumer_dag():
     """
@@ -22,7 +22,7 @@ def kafka_producer_consumer_dag():
         """Run Kafka producer script."""
         try:
             logger.info("Starting Kafka producer...")
-            result = subprocess.run(["python", "/path/to/your/producer.py"], capture_output=True, text=True)
+            result = subprocess.run(["python", "src/kafka_fetch/producer.py"], capture_output=True, text=True)
             if result.returncode == 0:
                 logger.info("Producer ran successfully")
             else:
@@ -36,7 +36,7 @@ def kafka_producer_consumer_dag():
         """Run Kafka consumer script."""
         try:
             logger.info("Starting Kafka consumer...")
-            result = subprocess.run(["python", "/consumer.py"], capture_output=True, text=True)
+            result = subprocess.run(["python", "src/kafka_fetch/consumer.py"], capture_output=True, text=True)
             if result.returncode == 0:
                 logger.info("Consumer ran successfully")
             else:
@@ -49,8 +49,7 @@ def kafka_producer_consumer_dag():
     producer = run_producer()
     consumer = run_consumer()
 
-    # Set the order (if necessary)
-    producer >> consumer  # Producer runs first, then consumer
 
-# Instantiate the DAG
+    producer >> consumer  
+
 kafka_producer_consumer_dag = kafka_producer_consumer_dag()

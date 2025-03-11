@@ -1,6 +1,6 @@
 pandas
 numpy
-google-cloud-storage
+google-cloud-storage==3.0.0
 pyodbc
 apache-airflow
 python-dotenv
@@ -8,7 +8,8 @@ pyspark
 tqdm
 pyarrow
 venv-pack 
-xgboost
 pymongo
 kafka-python
-# -e .
+confluent-kafka
+-e .
+

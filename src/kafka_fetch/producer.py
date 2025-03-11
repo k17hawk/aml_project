@@ -31,7 +31,7 @@ def fetch_gcs_data():
     content = blob.download_as_text()
 
     if GCS_FILE_NAME.endswith(".csv"):
-        df = pd.read_csv(io.StringIO(content))
+        df = pd.read_csv(io.StringIO(content), encoding="utf-8")
         data = df.to_dict(orient="records")
     else:
         print("No file found")

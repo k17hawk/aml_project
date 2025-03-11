@@ -1,0 +1,7 @@
+[build-system]
+requires = ['setuptools>=67.4.0', "wheel"]
+build-backend = "setuptools.build_meta"
+
+mypy_path = "src"
+ignore_missing_imports = true
+version = "0.1.0"
