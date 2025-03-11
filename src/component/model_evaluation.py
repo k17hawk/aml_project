@@ -65,13 +65,18 @@ class ModelEvaluation:
 
             #load required model and label index
             label_indexer_model = StringIndexerModel.load(label_indexer_model_path)
+            print(label_indexer_model)
             trained_model = PipelineModel.load(trained_model_file_path)
+            print(trained_model)
 
             #Read the dataframe
             dataframe: DataFrame = self.read_data()
+            print(dataframe.show())
+
             dataframe = label_indexer_model.transform(dataframe)
 
             best_model_path = self.model_resolver.get_best_model_path()
+            # print(best_model_dataframe)
 
             best_model_dataframe = self.aml_identifier.transform(dataframe)
 
