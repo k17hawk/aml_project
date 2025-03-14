@@ -4,7 +4,7 @@ replicaCount: 1
 image:
   repository: mypyspark
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Never
 
 sqlserver:
   host: "192.168.0.23"
@@ -46,6 +46,30 @@ resources:
     memory: "16Gi"  
   requests:
     memory: "2Gi"  
+
+pipelines:
+  - name: ingestion
+    script: "ingestion_pipeline.py"
+    dependencies: []
+  - name: validation
+    script: "validation_pipeline.py"
+    dependencies: ["ingestion"]
+  - name: transformation
+    script: "transformation_pipeline.py"
+    dependencies: ["validation"]
+  - name: training
+    script: "training_pipeline.py"
+    dependencies: ["transformation"]
+  - name: evaluation
+    script: "evaluation_pipeline.py"
+    dependencies: ["training"]
+  - name: pusher
+    script: "pusher_pipeline.py"
+    dependencies: ["evaluation"]
+  - name: file_watcher
+    script: "file_watcher.py"
+    dependencies: []
+
 
 tolerations: []
 nodeSelector: {}

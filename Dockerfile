@@ -80,5 +80,9 @@ WORKDIR /app/
 # Install Python dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Default command to start  Python script
-CMD ["spark-submit", "main.py"]
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Set the default command to run the pipeline script dynamically
+CMD ["/app/entrypoint.sh"]

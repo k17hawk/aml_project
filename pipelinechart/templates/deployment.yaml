@@ -2,21 +2,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-app
+  name: my-app-new
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: my-app
+      app: my-app-new
   template:
     metadata:
       labels:
-        app: my-app
+        app: my-app-new
     spec:
+      serviceAccountName: "{{ .Values.serviceAccount.name }}"  
       containers:
         - name: my-app-container
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+
+          command: ["/bin/bash", "-c"]
+          args:
+            - "python /app/${PIPELINE_SCRIPT}"
 
           env:
             - name: SQL_SERVER
@@ -41,9 +46,11 @@ spec:
                 secretKeyRef:
                   name: "{{ .Values.mongodb.secretName }}"
                   key: "{{ .Values.mongodb.secretKey }}"
+            - name: PIPELINE_SCRIPT  
+              value: "{{ (index .Values.pipelines 0).script }}"  
 
           volumeMounts:
-            - mountPath: /app/artifact  # This is where  folders will be created
+            - mountPath: /app/artifact
               name: artifact-storage
 
           resources:
@@ -55,4 +62,4 @@ spec:
       volumes:
         - name: artifact-storage
           persistentVolumeClaim:
-            claimName: my-app-pvc  
+            claimName: my-app-pvc
