@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # SQL_SERVER = r"DESKTOP-JSV1UOD\USER_ROOT"
-SQL_SERVER = "192.168.0.23,1433" 
+SQL_SERVER = "192.168.0.27,1433" 
 SQL_DATABASE = "AMLDb"
 SQL_USERNAME = "newuser"  
 SQL_PASSWORD = "toor"  
@@ -17,9 +17,9 @@ from datetime import datetime
 
 
 #developer env
-# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("C:/Users/lang-chain/Documents/aml_project/cloud-api.json"))
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("C:/Users/lang-chain/Documents/aml_project/cloud-api.json"))
 #docker env
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("cloud-api.json"))
+# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("cloud-api.json"))
 
 
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")

@@ -1,5 +1,5 @@
-from DB import DatabaseConnector
-from constants import *
+from src.DB import DatabaseConnector
+from src.constants import *
 import pandas as pd
 import pyodbc
 import os
@@ -79,11 +79,11 @@ class DataInserter:
             print("Database Error:", e)
 
 
-db_connector = DatabaseConnector(SQL_SERVER, SQL_DATABASE, SQL_USERNAME, SQL_PASSWORD)
-db_connector.connect()
+# db_connector = DatabaseConnector(SQL_SERVER, SQL_DATABASE, SQL_USERNAME, SQL_PASSWORD)
+# db_connector.connect()
 
-data_inserter = DataInserter(db_connector, TABLE_NAME)
-data_inserter.ensure_table_exists()
-data_inserter.insert_data_from_csv()
+# data_inserter = DataInserter(db_connector, TABLE_NAME)
+# data_inserter.ensure_table_exists()
+# data_inserter.insert_data_from_csv()
 
-db_connector.close_connection()
+# db_connector.close_connection()

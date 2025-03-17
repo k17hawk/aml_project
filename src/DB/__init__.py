@@ -1,1 +1,1 @@
-from DB.connect import DatabaseConnector
+from src.DB.connect import DatabaseConnector
