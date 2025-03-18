@@ -8,37 +8,52 @@ from pyspark.ml.param.shared import Param, Params
 from pyspark import keyword_only
 
 
-class TypeCastingTransformer(Transformer, HasInputCols, HasOutputCols, DefaultParamsReadable, DefaultParamsWritable):
+class TypeCastTransformer(Transformer, HasInputCols, HasOutputCols, DefaultParamsReadable, DefaultParamsWritable):
     def __init__(self, inputCols=None, outputCols=None):
-        super(TypeCastingTransformer, self).__init__()
-        self.inputCols = inputCols
-        self.outputCols = outputCols
-    
+        super(TypeCastTransformer, self).__init__()
+        self._setDefault(inputCols=[], outputCols=[])
+        if inputCols is not None:
+            self._set(inputCols=inputCols)
+        if outputCols is not None:
+            self._set(outputCols=outputCols)
+
+    def setInputCols(self, value):
+        return self._set(inputCols=value)
+
+    def setOutputCols(self, value):
+        return self._set(outputCols=value)
+
     def _transform(self, dataset):
-        for input_col, output_col in zip(self.inputCols, self.outputCols):
-            dataset = dataset.withColumn(output_col, col(input_col).cast("double"))
+        input_cols = self.getInputCols()
+        output_cols = self.getOutputCols()
+
+        for in_col, out_col in zip(input_cols, output_cols):
+            dataset = dataset.withColumn(out_col, col(in_col).cast("double"))
+
         return dataset
 
+class DropColumnsTransformer(Transformer, HasInputCols, DefaultParamsReadable, DefaultParamsWritable):
+    """
+    A custom transformer to drop specified columns from a DataFrame.
+    """
+    def __init__(self, inputCols=None):
+        super(DropColumnsTransformer, self).__init__()
+        self._setDefault(inputCols=[])
+        if inputCols is not None:
+            self._set(inputCols=inputCols)
 
-class DropColumnsTransformer(Transformer, DefaultParamsReadable, DefaultParamsWritable):
-    input_cols = Param(Params._dummy(), "input_cols", "List of columns to drop")
+    def setInputCols(self, value):
+        """
+        Sets the value of :py:attr:`inputCols`.
+        """
+        return self._set(inputCols=value)
 
-    def __init__(self, input_cols: List[str] = None):
-        super().__init__()
-        self.setParams(input_cols)
-
-    def setParams(self, input_cols: List[str]):
-        """Setting parameters"""
-        self._set(input_cols=input_cols)
-
-    def _transform(self, df: DataFrame) -> DataFrame:
-        """Dropping specified columns from DataFrame"""
-        cols_to_drop = self.getOrDefault(self.input_cols)
-        if cols_to_drop:
-            return df.drop(*cols_to_drop)
-        print(df.show())
-        return df
-
+    def _transform(self, dataset):
+        """
+        Drops the specified input columns from the DataFrame.
+        """
+        input_cols = self.getInputCols()
+        return dataset.drop(*input_cols)
 
 
 class DateTimeFeatureExtractor(Transformer, HasInputCols, HasOutputCols,
@@ -101,3 +116,4 @@ class DateTimeFeatureExtractor(Transformer, HasInputCols, HasOutputCols,
                              .withColumn("second", second(col(time_col)))
         
         return dataframe
+

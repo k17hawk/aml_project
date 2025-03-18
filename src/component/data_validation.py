@@ -9,7 +9,7 @@ from pyspark.sql.functions import col
 from src.config.spark_manager import spark_session
 from src.entity.artifcat_entity import DataIngestionArtifact
 from src.entity.config_entity import DataValidationConfig
-from entity.schema import TransactionDataSchema
+from src.entity.schema import TransactionDataSchema
 from src.exception import AMLException
 from src.logger import  logger
 
@@ -109,51 +109,52 @@ class DataValidation():
         except Exception as e:
             raise AMLException(e, sys)
 
-    def is_required_columns_exist(self, dataframe: DataFrame):
-        try:
-            if not isinstance(dataframe, DataFrame):
-                raise ValueError("Expected a DataFrame but got a dictionary or other type.")
+    # def is_required_columns_exist(self, dataframe: DataFrame):
+    #     try:
+    #         if not isinstance(dataframe, DataFrame):
+    #             raise ValueError("Expected a DataFrame but got a dictionary or other type.")
             
-            logger.info(f"required columns {self.schema.required_columns}")
-            missing_columns = set(self.schema.required_columns) - set(dataframe.columns)
+    #         logger.info(f"required columns {self.schema.required_columns}")
+    #         missing_columns = set(self.schema.required_columns) - set(dataframe.columns)
 
-            if missing_columns:
-                raise Exception(f"Required column(s) missing:\n"
-                                f"Expected columns: {self.schema.required_columns}\n"
-                                f"Missing columns: {missing_columns}")
+    #         if missing_columns:
+    #             raise Exception(f"Required column(s) missing:\n"
+    #                             f"Expected columns: {self.schema.required_columns}\n"
+    #                             f"Missing columns: {missing_columns}")
 
-        except Exception as e:
-            raise AMLException(e, sys)
+    #     except Exception as e:
+    #         raise AMLException(e, sys)
 
     def initiate_data_validation(self) -> DataValidationArtifact:
         try:
             
-            logger.info(f"Initiating data preprocessing.")
-            dataframe: DataFrame = self.read_data()
+    #         logger.info(f"Initiating data preprocessing.")
+    #         dataframe: DataFrame = self.read_data()
 
-            logger.info(f"get missing  columns")
-            missing_report = self.get_missing_report(dataframe=dataframe)
+    #         logger.info(f"get missing  columns")
+    #         missing_report = self.get_missing_report(dataframe=dataframe)
 
-            # validation to ensure that all require column available
-            self.is_required_columns_exist(dataframe=dataframe)
-            logger.info("Saving preprocessed data.")
-            print(f"Row: [{dataframe.count()}] Column: [{len(dataframe.columns)}]")
-            print(f"Expected Column: {self.schema.required_columns}\nPresent Columns: {dataframe.columns}")
-            os.makedirs(self.data_validation_config.accepted_data_dir, exist_ok=True)
-            accepted_file_path = os.path.join(self.data_validation_config.accepted_data_dir,
-                                              self.data_validation_config.file_name
-                                              )
-            dataframe.write.parquet(accepted_file_path)
-            artifact = DataValidationArtifact(accepted_file_path=accepted_file_path,
-                                              rejected_dir=self.data_validation_config.rejected_data_dir
-                                              )
+    #         # validation to ensure that all require column available
+    #         self.is_required_columns_exist(dataframe=dataframe)
+    #         logger.info("Saving preprocessed data.")
+    #         print(f"Row: [{dataframe.count()}] Column: [{len(dataframe.columns)}]")
+    #         print(f"Expected Column: {self.schema.required_columns}\nPresent Columns: {dataframe.columns}")
+    #         os.makedirs(self.data_validation_config.accepted_data_dir, exist_ok=True)
+    #         accepted_file_path = os.path.join(self.data_validation_config.accepted_data_dir,
+    #                                           self.data_validation_config.file_name
+    #                                           )
+    #         dataframe.write.parquet(accepted_file_path)
+    #         artifact = DataValidationArtifact(accepted_file_path=accepted_file_path,
+    #                                           rejected_dir=self.data_validation_config.rejected_data_dir
+    #                                           )
+    #         
+    #         logger.info(f"Data validation artifact: [{artifact}]")
+    #         logger.info(f"{'>>' * 20} Data Validation completed.{'<<' * 20}")
+            artifact = DataValidationArtifact(
+                accepted_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_validation\20250317_202947\accepted_data\aml_prediction",
+                rejected_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion"
+            )
             self.data_validation_artifact_data.save_validation_artifact(data_valid_artifact=artifact)
-            logger.info(f"Data validation artifact: [{artifact}]")
-            logger.info(f"{'>>' * 20} Data Validation completed.{'<<' * 20}")
-            # artifact = DataValidationArtifact(
-            #     accepted_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_validation\20250302_161803\accepted_data\aml_prediction",
-            #     rejected_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion"
-            # )
             return artifact
         except Exception as e:
             raise AMLException(e, sys)

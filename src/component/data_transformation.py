@@ -7,11 +7,12 @@ from src.logger import  logging as logger
 from src.entity.artifcat_entity import DataValidationArtifact, DataTransformationArtifact
 from src.entity.config_entity import DataTransformationConfig
 from pyspark.sql import DataFrame
-from src.ml.features import DateTimeFeatureExtractor,DropColumnsTransformer,TypeCastingTransformer
+from src.ml.features import DateTimeFeatureExtractor,DropColumnsTransformer,TypeCastTransformer
 from pyspark.sql.functions import col, rand
 import os,sys
 from functools import reduce
-from data_access.data_transformation_artifact import DataTransformationArtifactData
+from src.data_access.data_transformation_artifact import DataTransformationArtifactData
+
 class DataTransformation:
 
     def __init__(self, data_validation_artifact: DataValidationArtifact,
@@ -36,50 +37,75 @@ class DataTransformation:
         except Exception as e:
             raise AMLException(e, sys)
     
-    def get_data_transformation_pipeline(self, ) -> Pipeline:
-        try:   
+    def get_data_transformation_pipeline(self) -> Pipeline:
+        try:
             stages = []
-            #generating date & time variant
-            logger.info("applying derived feature Transformer")
-            derived_feature = DateTimeFeatureExtractor(inputCols=self.schema.derived_input_features,
-                                                      outputCols=self.schema.derived_output_features)  
+
+            # Step 1: Extract derived features (e.g., date/time components)
+            logger.info("Applying derived feature Transformer")
+            derived_feature = DateTimeFeatureExtractor(
+                inputCols=self.schema.derived_input_features,
+                outputCols=self.schema.derived_output_features
+            )
             stages.append(derived_feature)
-            #dropping date and time
-            logger.info("applying Drop column transfomer")
-            drop_cols_transformer = DropColumnsTransformer(input_cols=self.schema.unwanted_columns)
-            
+
+            # Step 2: Drop unwanted columns
+            logger.info("Applying Drop column transformer")
+            drop_cols_transformer = DropColumnsTransformer(
+                inputCols=self.schema.unwanted_columns
+            )
             stages.append(drop_cols_transformer)
 
-
-            logger.info("Applying String indxer Transformer")
-            #string index 
-            for string_input,string_output in zip(self.schema.string_indexing_input_features,
-                                                  self.schema.string_indexing_out_features):
-                string_indexer = StringIndexer(inputCol=string_input,outputCol=string_output)
-
+            # Step 3: String indexing for categorical columns
+            logger.info("Applying StringIndexer Transformer")
+            for string_input, string_output in zip(
+                self.schema.string_indexing_input_features,
+                self.schema.string_indexing_out_features
+            ):
+                string_indexer = StringIndexer(
+                    inputCol=string_input,
+                    outputCol=string_output,
+                    handleInvalid="keep"  # Handle unseen labels
+                )
                 stages.append(string_indexer)
-            logger.info("converting data types")
-            type_cast_transformer = TypeCastingTransformer(inputCols=self.schema.numerical_columns, 
-                                      outputCols=self.schema.numerical_out_columns )
-            
-            stages.append(type_cast_transformer)
-            logger.info("Applying vector assameber Transformer")
-            
-            assembled_col = [col for col in self.schema.numerical_out_columns if col!=self.schema.target_column]
-            vector_assambler = VectorAssembler(inputCols=assembled_col,
-                                               outputCol=self.schema.vector_assembler_out_cols)
-            stages.append(vector_assambler)
-            logger.info("applying standard scaler")
-            # print(self.schema.vector_assembler_out_cols)
-            standard_scaler = StandardScaler(inputCol=self.schema.vector_assembler_out_cols,
-                                             outputCol=self.schema.scaled_vector_input_features)
-            stages.append(standard_scaler)
-            pipeline = Pipeline(
-                stages=stages
+
+            # Step 4: Cast numerical columns to appropriate types
+            logger.info("Converting data types")
+            type_cast_transformer = TypeCastTransformer(
+                inputCols=self.schema.numerical_columns,
+                outputCols=self.schema.numerical_out_columns
             )
+            stages.append(type_cast_transformer)
+
+            # Step 5: Assemble features into a vector
+            logger.info("Applying VectorAssembler Transformer")
+            assembled_cols = [
+                col for col in self.schema.numerical_out_columns
+                if col != self.schema.target_column
+            ]
+            vector_assembler = VectorAssembler(
+                inputCols=assembled_cols,
+                outputCol=self.schema.vector_assembler_out_cols
+            )
+            stages.append(vector_assembler)
+
+            # Step 6: Scale features using StandardScaler
+            logger.info("Applying StandardScaler")
+            standard_scaler = StandardScaler(
+                inputCol=self.schema.vector_assembler_out_cols,
+                outputCol=self.schema.scaled_vector_input_features,
+                withStd=True,
+                withMean=True
+            )
+            stages.append(standard_scaler)
+
+            # Create the pipeline
+            pipeline = Pipeline(stages=stages)
             logger.info(f"Data transformation pipeline completed: [{pipeline}]")
             return pipeline
+
         except Exception as e:
+            logger.info(f"Error in data transformation pipeline: {str(e)}")
             raise AMLException(e, sys)
     
     
@@ -146,12 +172,12 @@ class DataTransformation:
             required_columns = [self.schema.scaled_vector_input_features, self.schema.target_column]
 
             transformed_trained_dataframe = transformed_pipeline.transform(train_dataframe)
-            # print(transformed_trained_dataframe.printSchema())
-            # any_null = reduce(lambda a, b: a | b, (col(c).isNull() for c in transformed_trained_dataframe.columns))
+            print(transformed_trained_dataframe.printSchema())
+            any_null = reduce(lambda a, b: a | b, (col(c).isNull() for c in transformed_trained_dataframe.columns))
 
-            # has_null = transformed_trained_dataframe.filter(any_null).count() > 0
+            has_null = transformed_trained_dataframe.filter(any_null).count() > 0
 
-            # print(f"DataFrame has nulls: {has_null}")
+            print(f"DataFrame has nulls: {has_null}")
 
             # print(transformed_trained_dataframe.show(10))
             transformed_trained_dataframe = transformed_trained_dataframe.select(required_columns)  
@@ -177,7 +203,12 @@ class DataTransformation:
             # print(export_pipeline_file_path)
             # print(type(transformed_pipeline))
             # transformed_pipeline.save(r"C:\Users\lang-chain\Documents\aml_project\testing")
-            transformed_pipeline.save(export_pipeline_file_path)
+            try:
+                transformed_pipeline.save(export_pipeline_file_path)
+                logger.info(f"Pipeline successfully saved at: {export_pipeline_file_path}")
+            except Exception as e:
+                logger.error(f"Error saving pipeline: {str(e)}")
+           
             logger.info(f"Saving transformed train data at: [{transformed_train_data_file_path}]")
             # print(transformed_trained_dataframe.count(), len(transformed_trained_dataframe.columns))
             transformed_trained_dataframe.write.parquet(transformed_train_data_file_path)
@@ -200,4 +231,3 @@ class DataTransformation:
             
         except Exception as e:
             raise AMLException(e,sys)
-        
