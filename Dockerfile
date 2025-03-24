@@ -9,19 +9,23 @@ ENV PATH=$PATH:$SPARK_HOME/bin:/opt/venv/bin
 ENV PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/python/lib/py4j-0.10.9.7-src.zip:/opt/venv/lib/python3.11/site-packages
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONHASHSEED=0
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    wget curl openjdk-17-jdk python3.11 python3.11-venv \
-    unixodbc unixodbc-dev gnupg && \
-    rm -rf /var/lib/apt/lists/*
 
 # Install system dependencies, including unixODBC
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    wget curl openjdk-17-jdk python3.11 python3.11-venv \
-    unixodbc unixodbc-dev gnupg && \
+    apt-get install -y \
+    procps \
+    wget \
+    curl \
+    openjdk-17-jdk \
+    python3.11 \
+    python3.11-venv \
+    unixodbc \
+    unixodbc-dev \
+    gnupg && \
     rm -rf /var/lib/apt/lists/*
+
+
+
 
 # Set Python 3.11 as the default
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
@@ -31,6 +35,13 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
 RUN python3.11 -m venv /opt/venv && \
     /opt/venv/bin/python -m pip install --upgrade pip && \
     find /opt/venv -name "*.pyc" -delete
+
+# Install Microsoft ODBC Driver 18 for SQL Server
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/microsoft-prod.list && \
+    apt-get update && \
+    ACCEPT_EULA=Y apt-get install -y msodbcsql18 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Download & verify Hadoop
 RUN wget --progress=dot:giga --retry-connrefused --waitretry=5 --timeout=30 \

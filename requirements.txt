@@ -13,3 +13,4 @@ kafka-python
 confluent-kafka
 -e .
 watchdog
+sqlalchemy

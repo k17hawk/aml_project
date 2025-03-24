@@ -6,20 +6,25 @@ image:
   pullPolicy: IfNotPresent
 
 sqlserver:
-  host: "192.168.0.27"
-  port: "1433"
+  host:
+    secretName: "db-secrets"
+    secretKey: "host"  
+  port:
+    secretName: "db-secrets"
+    secretKey: "port"  
   database:
     secretName: "db-secrets"
-    secretKey: "database"
+    secretKey: "database" 
   username:
     secretName: "db-secrets"
-    secretKey: "username"
+    secretKey: "username" 
   password:
     secretName: "db-secrets"
-    secretKey: "password"
+    secretKey: "password" 
   table:
     secretName: "db-secrets"
-    secretKey: "table"
+    secretKey: "table" 
+
 
 mongodb:
   connectionUri:
@@ -58,7 +63,7 @@ autoscaling:
 resources:
   limits:
     memory: "8Gi" 
-    cpu: "4"       
+    cpu: "2"       
   requests:
     memory: "6Gi" 
     cpu: "2"       

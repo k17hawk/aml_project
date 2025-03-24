@@ -39,20 +39,44 @@ class DataIngestion:
         except pyodbc.Error as e:
             logger.info(f"Error connecting to the database: {e}")
 
-    def fetch_data(self, table, connection, storePath, chunksize=1000):
-        query = f"SELECT * FROM {table}" 
-        os.makedirs(storePath,exist_ok=True)
+    # def fetch_data(self, table, connection, storePath, chunksize=1000):
+    #     query = f"SELECT * FROM {table}" 
+    #     os.makedirs(storePath,exist_ok=True)
+    #     file_path = os.path.join(storePath, f"{table}.csv")
+    #     first_chunk = True 
+    #     total_rows_query = f"SELECT COUNT(*) FROM {table}"
+    #     logger.info('reading the data...')
+    #     total_rows = pd.read_sql(total_rows_query, connection).iloc[0, 0]
+    #     with tqdm(total=total_rows, desc="Fetching Data", unit="rows") as pbar:
+    #         for chunk in pd.read_sql(query, connection, chunksize=chunksize):
+    #             chunk.to_csv(file_path, mode='w' if first_chunk else 'a', header=first_chunk, index=False)
+    #             first_chunk = False  
+    #             pbar.update(len(chunk))  
+    #     logger.info(f"writing to csv completed at {file_path}")
+    #     return file_path
+    def fetch_data(self, table, connection, storePath, chunksize=1000, max_rows=50000):
+        query = f"SELECT TOP {max_rows} * FROM {table}"  # SQL Server
+        # query = f"SELECT * FROM {table} LIMIT {max_rows}"  # MySQL/PostgreSQL
+        
+        os.makedirs(storePath, exist_ok=True)
         file_path = os.path.join(storePath, f"{table}.csv")
-        first_chunk = True 
-        total_rows_query = f"SELECT COUNT(*) FROM {table}"
-        logger.info('reading the data...')
-        total_rows = pd.read_sql(total_rows_query, connection).iloc[0, 0]
-        with tqdm(total=total_rows, desc="Fetching Data", unit="rows") as pbar:
+        
+        logger.info(f"Fetching first {max_rows} rows from {table}...")
+        
+        # No need to count total rows since we're limiting
+        with tqdm(total=max_rows, desc="Fetching Data", unit="rows") as pbar:
+            first_chunk = True
             for chunk in pd.read_sql(query, connection, chunksize=chunksize):
-                chunk.to_csv(file_path, mode='w' if first_chunk else 'a', header=first_chunk, index=False)
-                first_chunk = False  
-                pbar.update(len(chunk))  
-        logger.info(f"writing to csv completed at {file_path}")
+                chunk.to_csv(
+                    file_path,
+                    mode='w' if first_chunk else 'a',
+                    header=first_chunk,
+                    index=False
+                )
+                first_chunk = False
+                pbar.update(len(chunk))
+        
+        logger.info(f"CSV saved to {file_path}")
         return file_path
         
     

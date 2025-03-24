@@ -30,11 +30,43 @@ spec:
               value: "3.5.5"
             - name: SPARK_HOME
               value: "/opt/spark"
-            - name: MONGO_DB_URL  # MongoDB URL from Kubernetes Secret
+            - name: MONGO_DB_URL
               valueFrom:
                 secretKeyRef:
-                  name: db-secrets
-                  key: mongodb
+                  name: {{ .Values.mongodb.connectionUri.secretName }}
+                  key: {{ .Values.mongodb.connectionUri.secretKey }}
+            # ODBC Connection Details
+            - name: SQL_SERVER_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.host.secretName }}
+                  key: {{ .Values.sqlserver.host.secretKey }}
+            - name: SQL_SERVER_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.port.secretName }}
+                  key: {{ .Values.sqlserver.port.secretKey }}
+            - name: SQL_SERVER_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.database.secretName }}
+                  key: {{ .Values.sqlserver.database.secretKey }}
+            - name: SQL_SERVER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.username.secretName }}
+                  key: {{ .Values.sqlserver.username.secretKey }}
+            - name: SQL_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.password.secretName }}
+                  key: {{ .Values.sqlserver.password.secretKey }}
+            - name: SQL_SERVER_TABLE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.table.secretName }}
+                  key: {{ .Values.sqlserver.table.secretKey }}
+
             - name: STARTUP_COMMAND  # Fetch startup command from ConfigMap
               valueFrom:
                 configMapKeyRef:
@@ -47,17 +79,11 @@ spec:
               mountPath: /app/config  # Path to store configuration files
           command: ["/bin/sh", "-c"]
           args: ["$(STARTUP_COMMAND)"]  # Run install + start app dynamically from ConfigMap
-          resources:
-            limits:
-              memory: "8Gi"
-              cpu: "4"
-            requests:
-              memory: "2Gi"
-              cpu: "2"
       volumes:
         - name: app-storage
           persistentVolumeClaim:
             claimName: app-pvc  # Ensure this PVC exists
         - name: config-volume
           configMap:
-            name: app-config  # Ensure this ConfigMap contains spark_config.json
+            name: app-config
+      

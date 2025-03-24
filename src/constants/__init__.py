@@ -1,11 +1,18 @@
 from pathlib import Path
-
+import os
 # SQL_SERVER = r"DESKTOP-JSV1UOD\USER_ROOT"
-SQL_SERVER = "192.168.0.27,1433" 
-SQL_DATABASE = "AMLDb"
-SQL_USERNAME = "newuser"  
-SQL_PASSWORD = "toor"  
-TABLE_NAME = 'Transactions'
+# SQL_SERVER = "192.168.0.27,1433" 
+# SQL_DATABASE = "AMLDb"
+# SQL_USERNAME = "newuser"  
+# SQL_PASSWORD = "toor"  
+TABLE_NAME =  os.getenv("SQL_SERVER_TABLE")
+
+SQL_HOST = os.getenv("SQL_SERVER_HOST")
+SQL_PORT = os.getenv("SQL_SERVER_PORT")
+SQL_DATABASE = os.getenv("SQL_SERVER_DATABASE")
+SQL_USERNAME = os.getenv("SQL_SERVER_USERNAME")
+SQL_PASSWORD = os.getenv("SQL_SERVER_PASSWORD")
+SQL_SERVER = f"{SQL_HOST},{SQL_PORT}"
 
 BUCKET_NAME = 'abc_aml_data_bucket'
 GCS_FILE_NAME = 'aml_input_data.csv'

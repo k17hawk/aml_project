@@ -26,8 +26,8 @@ data:
       "spark.kubernetes.container.image": "mypyspark:latest",
       "spark.kubernetes.namespace": "default",
       "spark.driver.memory": "3g",
-      "spark.executor.memory": "6g",
-      "spark.executor.instances": "2",
+      "spark.executor.memory": "3g",
+      "spark.executor.instances": "4",
       "spark.executor.cores": "2",
       "spark.sql.shuffle.partitions": "50",
       "spark.kubernetes.authenticate.driver.serviceAccountName": "spark"
