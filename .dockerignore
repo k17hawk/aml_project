@@ -40,6 +40,7 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .nox/
+.conda/
 .coverage
 .coverage.*
 .cache
@@ -156,7 +157,10 @@ dmypy.json
 
 # pytype static type analyzer
 .pytype/
-
+Dockerfile.airflow
+Dockerfile.airflow_old
+templates/
+LICENSE/
 # Cython debug symbols
 cython_debug/
 
@@ -177,3 +181,5 @@ cython_debug/
 /logs
 /artifact
 /saved_models
+mypyspark.tar
+.docker_temp_286067411

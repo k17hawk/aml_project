@@ -1,22 +1,44 @@
+version: '3.8'
+
 services:
-  airflow:
-    image: airflow-image
-    container_name: airflow-containe
-    build:
-      context: .
-      dockerfile: Dockerfile.ariflow
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./dags:/app/dags
-      - ./src:/app/src
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
     environment:
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-    networks:
-      - airflow-network
-    entrypoint: ["/bin/sh", "-c", "chmod +x /app/start.sh && /app/start.sh"]
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
 
-networks:
-  airflow-network:
-    driver: bridge
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  app:
+    build:
+      context: . 
+      dockerfile: Dockerfile
+    container_name: my-python-app
+    depends_on:
+      - kafka
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - HADOOP_VERSION=3.3.6
+      - SPARK_VERSION=3.5.5
+      - SPARK_HOME=/opt/spark
+    volumes:
+      - .:/app 
+    command: ["/bin/sh", "-c", "sleep infinity"] 

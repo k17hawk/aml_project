@@ -93,35 +93,35 @@ class DataIngestion:
     
     def initiate_data_ingestion(self):
         try:
-            # datasource_url: str = self.data_ingestion_config.datasource_url
-            # datasource_database: str = self.data_ingestion_config.database
-            # datasource_username: str = self.data_ingestion_config.username
-            # datasource_password: str = self.data_ingestion_config.password
-            # datasource_tableName: str = self.data_ingestion_config.table
-            # datasource_storePath: str = self.data_ingestion_config.download_dir
+            datasource_url: str = self.data_ingestion_config.datasource_url
+            datasource_database: str = self.data_ingestion_config.database
+            datasource_username: str = self.data_ingestion_config.username
+            datasource_password: str = self.data_ingestion_config.password
+            datasource_tableName: str = self.data_ingestion_config.table
+            datasource_storePath: str = self.data_ingestion_config.download_dir
 
-            # connection = self.connect(datasource_url, datasource_database, datasource_username, datasource_password)
-            # try:
-            #     fetched_file_path = self.fetch_data(datasource_tableName, connection, datasource_storePath)
-            #     logger.info(f"Data ingestion completed successfully.{fetched_file_path}")
-            # except Exception as e:
-            #     raise AMLException(e, sys)
-            # file_path = self.convert_files_to_parquet(fetched_file_path)
-            # self.write_metadata(file_path)
-            # feature_store_file_path = os.path.join(self.data_ingestion_config.feature_store_dir,
-            #                                         self.data_ingestion_config.file_name)
-            # artifact = DataIngestionArtifact(
-            #         feature_store_file_path=feature_store_file_path,
-            #         download_dir=self.data_ingestion_config.download_dir,
-            #         metadata_file_path=self.data_ingestion_config.metadata_file_path,
-
-            #     )
-            
+            connection = self.connect(datasource_url, datasource_database, datasource_username, datasource_password)
+            try:
+                fetched_file_path = self.fetch_data(datasource_tableName, connection, datasource_storePath)
+                logger.info(f"Data ingestion completed successfully.{fetched_file_path}")
+            except Exception as e:
+                raise AMLException(e, sys)
+            file_path = self.convert_files_to_parquet(fetched_file_path)
+            self.write_metadata(file_path)
+            feature_store_file_path = os.path.join(self.data_ingestion_config.feature_store_dir,
+                                                    self.data_ingestion_config.file_name)
             artifact = DataIngestionArtifact(
-                feature_store_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\feature_store\Transaction",
-                metadata_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion",
-                download_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\20250317_202947\downloaded_files"
-            )
+                    feature_store_file_path=feature_store_file_path,
+                    download_dir=self.data_ingestion_config.download_dir,
+                    metadata_file_path=self.data_ingestion_config.metadata_file_path,
+
+                )
+            
+            # artifact = DataIngestionArtifact(
+            #     feature_store_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\feature_store\Transaction",
+            #     metadata_file_path=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion",
+            #     download_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion\20250317_202947\downloaded_files"
+            # )
             self.data_ingestion_artifact_data.save_ingestion_artifact(data_ingestion_artifact=artifact)
             logger.info(f"{'>>' * 20}Data Ingestion completed.{'<<' * 20}")
             logger.info(f"Data ingestion artifact: {artifact}")

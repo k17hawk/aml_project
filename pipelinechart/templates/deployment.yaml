@@ -21,7 +21,7 @@ spec:
 
           command: ["/bin/bash", "-c"]
           args:
-            - "python /app/${PIPELINE_SCRIPT}"
+            - "pip install --no-cache-dir -r /app/config/requirements.txt &&python /app/${PIPELINE_SCRIPT}"
 
           env:
             - name: SQL_SERVER

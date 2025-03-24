@@ -1,4 +1,3 @@
----
 replicaCount: 1
 
 image:
@@ -10,18 +9,27 @@ sqlserver:
   host: "192.168.0.27"
   port: "1433"
   database:
-    secretName: "db-secrets-new"
-    secretKey: "sql_database"
+    secretName: "db-secrets"
+    secretKey: "database"
   username:
-    secretName: "db-secrets-new"
-    secretKey: "sql_username"
+    secretName: "db-secrets"
+    secretKey: "username"
   password:
-    secretName: "db-secrets-new"
-    secretKey: "sql_password"
+    secretName: "db-secrets"
+    secretKey: "password"
+  table:
+    secretName: "db-secrets"
+    secretKey: "table"
 
 mongodb:
-  secretName: "db-secrets-new"
-  secretKey: "mongo_db_url"
+  connectionUri:
+    secretName: "db-secrets"
+    secretKey: "mongodb"
+  auth:
+    enabled: false
+  service:
+    type: ClusterIP
+    port: 27017
 
 service:
   type: ClusterIP
@@ -29,8 +37,14 @@ service:
   targetPort: 5000
 
 serviceAccount:
-  create: true
-  name: "my-app-service-account"
+  create: true  
+  name: "spark"
+
+rbac:
+  create: true  
+  roleName: "spark-role"
+  roleBindingName: "spark-role-binding"
+
 
 ingress:
   enabled: false
@@ -43,10 +57,11 @@ autoscaling:
 
 resources:
   limits:
-    memory: "8Gi"  
+    memory: "8Gi" 
+    cpu: "4"       
   requests:
-    memory: "2Gi"
-
+    memory: "6Gi" 
+    cpu: "2"       
 
 pipelines:
   - name: ingestion
@@ -71,7 +86,16 @@ pipelines:
     script: "file_watcher.py"
     dependencies: []
 
+env:
+  - name: MONGO_DB_URL
+    valueFrom:
+      secretKeyRef:
+        name: db-secrets
+        key: mongodb
 
 tolerations: []
 nodeSelector: {}
 affinity: {}
+
+config:
+  enabled: true
