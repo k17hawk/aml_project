@@ -6,7 +6,6 @@ from typing import List, Dict
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import col
 
-from src.config.spark_manager import spark_session
 from src.entity.artifcat_entity import DataIngestionArtifact
 from src.entity.config_entity import DataValidationConfig
 from src.entity.schema import TransactionDataSchema
@@ -16,6 +15,17 @@ from src.logger import  logger
 from pyspark.sql.functions import lit
 from src.entity.artifcat_entity import DataValidationArtifact
 from src.data_access.data_validation_artifact import DataValidationArtifactData
+
+from pathlib import Path
+import importlib.util
+
+spec = importlib.util.spec_from_file_location(
+    "spark_manager", 
+    Path("/app/config/spark_manager.py")
+)
+spark_manager = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(spark_manager)
+spark_session = spark_manager.SparkManager.get_spark_session()
 
 ERROR_MESSAGE = "error_msg"
 MissingReport = namedtuple("MissingReport", ["total_row", "missing_row", "missing_percentage"])
@@ -109,21 +119,21 @@ class DataValidation():
         except Exception as e:
             raise AMLException(e, sys)
 
-    # def is_required_columns_exist(self, dataframe: DataFrame):
-    #     try:
-    #         if not isinstance(dataframe, DataFrame):
-    #             raise ValueError("Expected a DataFrame but got a dictionary or other type.")
+    def is_required_columns_exist(self, dataframe: DataFrame):
+        try:
+            if not isinstance(dataframe, DataFrame):
+                raise ValueError("Expected a DataFrame but got a dictionary or other type.")
             
-    #         logger.info(f"required columns {self.schema.required_columns}")
-    #         missing_columns = set(self.schema.required_columns) - set(dataframe.columns)
+            logger.info(f"required columns {self.schema.required_columns}")
+            missing_columns = set(self.schema.required_columns) - set(dataframe.columns)
 
-    #         if missing_columns:
-    #             raise Exception(f"Required column(s) missing:\n"
-    #                             f"Expected columns: {self.schema.required_columns}\n"
-    #                             f"Missing columns: {missing_columns}")
+            if missing_columns:
+                raise Exception(f"Required column(s) missing:\n"
+                                f"Expected columns: {self.schema.required_columns}\n"
+                                f"Missing columns: {missing_columns}")
 
-    #     except Exception as e:
-    #         raise AMLException(e, sys)
+        except Exception as e:
+            raise AMLException(e, sys)
 
     def initiate_data_validation(self) -> DataValidationArtifact:
         try:
@@ -137,7 +147,7 @@ class DataValidation():
             # validation to ensure that all require column available
             self.is_required_columns_exist(dataframe=dataframe)
             logger.info("Saving preprocessed data.")
-            print(f"Row: [{dataframe.count()}] Column: [{len(dataframe.columns)}]")
+            # print(f"Row: [{dataframe.count()}] Column: [{len(dataframe.columns)}]")
             print(f"Expected Column: {self.schema.required_columns}\nPresent Columns: {dataframe.columns}")
             os.makedirs(self.data_validation_config.accepted_data_dir, exist_ok=True)
             accepted_file_path = os.path.join(self.data_validation_config.accepted_data_dir,

@@ -1,7 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app
+  name: my-python-app
+  labels:
+    app: my-python-app
 spec:
   replicas: 1
   selector:
@@ -12,30 +14,63 @@ spec:
       labels:
         app: my-python-app
     spec:
-      serviceAccountName: spark #added for role and service account of spark
+      serviceAccountName: spark
       containers:
         - name: my-python-app
-          image: mypyspark:latest
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: Never
           ports:
+            - containerPort: 4040
+              name: spark-ui
+            - containerPort: 7078
+              name: spark-driver
             - containerPort: 5000
+              name: flask-ui
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4040
+            initialDelaySeconds: 20  # Extra time for Spark to initialize
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4040
+            initialDelaySeconds: 30
+            periodSeconds: 10
           env:
+            - name: PYSPARK_PYTHON
+              value: /opt/venv/bin/python
             - name: PYTHONUNBUFFERED
               value: "1"
             - name: JAVA_HOME
-              value: "/usr/lib/jvm/java-17-openjdk-amd64"
-            - name: HADOOP_VERSION
-              value: "3.3.6"
-            - name: SPARK_VERSION
-              value: "3.5.5"
+              value: "/opt/java/openjdk"
+            - name: HADOOP_HOME
+              value: "/opt/hadoop"
+            - name: HADOOP_CONF_DIR
+              value: "/opt/hadoop/etc/hadoop"
             - name: SPARK_HOME
               value: "/opt/spark"
+            - name: SPARK_LOCAL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: STARTUP_COMMAND
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: startup-command
+
+            # ✅ MongoDB Configuration
             - name: MONGO_DB_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.mongodb.connectionUri.secretName }}
                   key: {{ .Values.mongodb.connectionUri.secretKey }}
-            # ODBC Connection Details
+ #mongodb+srv://kumardahal536:Seu5paHzKgMMFwAN@cluster0.oh3gzuw.mongodb.net/
+            # ✅ SQL Server Configuration
             - name: SQL_SERVER_HOST
               valueFrom:
                 secretKeyRef:
@@ -67,23 +102,25 @@ spec:
                   name: {{ .Values.sqlserver.table.secretName }}
                   key: {{ .Values.sqlserver.table.secretKey }}
 
-            - name: STARTUP_COMMAND  # Fetch startup command from ConfigMap
-              valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: startup-command
           volumeMounts:
-            - name: app-storage
-              mountPath: /app/artifact  # Path to store artifacts
+            - name: spark-storage
+              mountPath: /app/artifact  # ✅ Keeps Python paths intact
             - name: config-volume
-              mountPath: /app/config  # Path to store configuration files
+              mountPath: /app/config
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
           command: ["/bin/sh", "-c"]
-          args: ["$(STARTUP_COMMAND)"]  # Run install + start app dynamically from ConfigMap
+          args:
+            - $(STARTUP_COMMAND)
       volumes:
-        - name: app-storage
+        - name: spark-storage
           persistentVolumeClaim:
-            claimName: app-pvc  # Ensure this PVC exists
+            claimName: spark-data-pvc
         - name: config-volume
           configMap:
             name: app-config
-      

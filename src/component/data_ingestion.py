@@ -4,7 +4,17 @@ from src.exception import AMLException
 from src.logger import logger
 import os,sys 
 import pandas as pd
-from src.config.spark_manager import spark_session
+# from src.config.spark_manager import spark_session
+from pathlib import Path
+import importlib.util
+
+spec = importlib.util.spec_from_file_location(
+    "spark_manager", 
+    Path("/app/config/spark_manager.py")
+)
+spark_manager = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(spark_manager)
+spark_session = spark_manager.SparkManager.get_spark_session()
 import pyodbc
 from tqdm import tqdm
 from src.entity.artifcat_entity import DataIngestionArtifact
@@ -54,7 +64,7 @@ class DataIngestion:
     #             pbar.update(len(chunk))  
     #     logger.info(f"writing to csv completed at {file_path}")
     #     return file_path
-    def fetch_data(self, table, connection, storePath, chunksize=1000, max_rows=50000):
+    def fetch_data(self, table, connection, storePath, chunksize=1000, max_rows=1000):
         query = f"SELECT TOP {max_rows} * FROM {table}"  # SQL Server
         # query = f"SELECT * FROM {table} LIMIT {max_rows}"  # MySQL/PostgreSQL
         
@@ -130,6 +140,7 @@ class DataIngestion:
                 logger.info(f"Data ingestion completed successfully.{fetched_file_path}")
             except Exception as e:
                 raise AMLException(e, sys)
+            logger.info(fetched_file_path)
             file_path = self.convert_files_to_parquet(fetched_file_path)
             self.write_metadata(file_path)
             feature_store_file_path = os.path.join(self.data_ingestion_config.feature_store_dir,

@@ -2,34 +2,47 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: app-config
+  namespace: default
 data:
-  requirements.txt: |
-    pandas
-    numpy
-    google-cloud-storage==3.0.0
-    pyodbc
-    python-dotenv
-    pyspark
-    tqdm
-    pyarrow
-    venv-pack 
-    pymongo
-    flask
-    watchdog
-    requests
-    kafka-python
-    confluent-kafka
-    PyYAML
-  spark_config.json: |
-    {
-      "master": "k8s://https://192.168.49.2:8443",
-      "spark.kubernetes.container.image": "mypyspark:latest",
-      "spark.kubernetes.namespace": "default",
-      "spark.driver.memory": "3g",
-      "spark.executor.memory": "3g",
-      "spark.executor.instances": "4",
-      "spark.executor.cores": "2",
-      "spark.sql.shuffle.partitions": "50",
-      "spark.kubernetes.authenticate.driver.serviceAccountName": "spark"
-    }
-  startup-command: "/opt/venv/bin/python /app/test.py"
+  startup-command: |
+    set -x  
+    /opt/venv/bin/python -m pip install --no-cache-dir pandas numpy google-cloud-storage==3.0.0 pyodbc python-dotenv tqdm pyarrow \
+        venv-pack pymongo flask watchdog requests kafka-python confluent-kafka PyYAML 2>&1 | tee /tmp/install.log && \
+    /opt/venv/bin/python /app/test.py 2>&1 | tee /tmp/script.log
+
+
+  spark_manager.py: |
+    import socket
+    from pyspark.sql import SparkSession
+
+    class SparkManager:
+      @staticmethod
+      def get_spark_session(app_name="my-python-app"):
+          driver_host = socket.gethostbyname(socket.gethostname())
+          
+          return (
+              SparkSession.builder \
+              .appName(app_name)\
+              .master("local[2]")\
+              .config("spark.driver.host", driver_host)\
+              .config("spark.driver.port", "29413") \
+              .config("spark.kubernetes.container.image", "mypyspark:latest")\
+              .config("spark.kubernetes.namespace", "default")\
+              .config("spark.kubernetes.authenticate.driver.serviceAccountName", "spark")\
+              .config("spark.driver.memory", "14g")\
+              .config("spark.executor.memory", "14g")\
+              .config("spark.memory.fraction", "0.75")\
+              .config("spark.memory.storageFraction", "0.3") \
+              .config("spark.sql.shuffle.partitions", "4")\
+              .config("spark.default.parallelism", "4")\
+              .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")\
+              .config("spark.kryoserializer.buffer.max", "512m") \
+              .config("spark.ui.host", "0.0.0.0")\
+              .config("spark.ui.enabled", "true")\
+              .config("spark.ui.port", "4040")\
+              .config("spark.ui.reverseProxy", "true")\
+              .config("spark.kubernetes.allocation.batch.delay", "5s")\
+              .config("spark.kubernetes.authenticate.caCertFile", "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")\
+              .config("spark.kubernetes.authenticate.oauthTokenFile", "/var/run/secrets/kubernetes.io/serviceaccount/token")\
+              .getOrCreate()
+          )

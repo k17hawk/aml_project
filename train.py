@@ -1,5 +1,5 @@
 import gc
-from pyspark.sql import SparkSession
+# from pyspark.sql import SparkSession
 from src.entity.artifcat_entity import DataIngestionArtifact, DataValidationArtifact, DataTransformationArtifact, \
     ModelTrainerArtifact, ModelEvaluationArtifact, ModelPusherArtifact
 from src.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig, DataValidationConfig, \

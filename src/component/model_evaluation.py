@@ -8,11 +8,20 @@ import sys
 from pyspark.sql import DataFrame
 from pyspark.ml.feature import StringIndexerModel
 from pyspark.ml.pipeline import PipelineModel
-from src.config.spark_manager import spark_session
+# from src.config.spark_manager import spark_session
 from src.utils import get_score
 from src.ml.estimator import  ModelResolver,AMLIdntifierEstimator
 from src.data_access.model_eval_artifact import ModelEvaluationArtifactData
+from pathlib import Path
+import importlib.util
 
+spec = importlib.util.spec_from_file_location(
+    "spark_manager", 
+    Path("/app/config/spark_manager.py")
+)
+spark_manager = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(spark_manager)
+spark_session = spark_manager.SparkManager.get_spark_session()
 class ModelEvaluation:
 
     def __init__(self,

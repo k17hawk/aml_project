@@ -61,7 +61,6 @@ rbac:
   create: true
   roleName: "spark-cluster-role" 
   roleBindingName: "spark-rolebinding"
-  namespace: "default"  
 
 ingress:
   enabled: false
@@ -74,12 +73,12 @@ autoscaling:
 
 resources:
   requests:
-    cpu: "2"       # Leave some CPU for system/MongoDB
-    memory: "16Gi" # Leave 6GB for system/MongoDB
+    cpu: "500m"      # 0.5 vCPU to allow better scheduling
+    memory: "2Gi"    # Request at least 2GB RAM
   limits:
-    cpu: "4"       # Still allow bursting
-    memory: "20Gi"
-    
+    cpu: "1"         # Allow up to 1 full vCPU
+    memory: "3Gi"    # Set a higher limit to prevent OOM
+
 pipelines:
   - name: ingestion
     script: "ingestion_pipeline.py"
