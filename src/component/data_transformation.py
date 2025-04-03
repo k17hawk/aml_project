@@ -1,7 +1,6 @@
 from src.entity.schema import TransactionDataSchema
 from pyspark.ml.feature import StandardScaler, VectorAssembler, StringIndexer
 from pyspark.ml.pipeline import Pipeline
-from src.config.spark_manager import spark_session
 from src.exception import AMLException
 from src.logger import  logging as logger
 from src.entity.artifcat_entity import DataValidationArtifact, DataTransformationArtifact
@@ -12,6 +11,16 @@ from pyspark.sql.functions import col, rand
 import os,sys
 from functools import reduce
 from src.data_access.data_transformation_artifact import DataTransformationArtifactData
+from pathlib import Path
+import importlib.util
+
+spec = importlib.util.spec_from_file_location(
+    "spark_manager", 
+    Path("/app/config/spark_manager.py")
+)
+spark_manager = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(spark_manager)
+spark_session = spark_manager.SparkManager.get_spark_session()
 
 class DataTransformation:
 

@@ -1,0 +1,22 @@
+# mongo-values.yaml
+persistence:
+  enabled: true
+  size: 500Mi  # Hard cap at 500MB storage
+  storageClass: "standard"  # Use default or your custom storage class
+
+mongodb:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "300m"
+      memory: "512Mi"
+    
+# Disable WiredTiger cache auto-tuning (critical for small storage)
+mongodbExtraFlags:
+  - "--wiredTigerCacheSizeGB=0.25"  
+
+# Reduce journal and oplog overhead
+replication:
+  enabled: false  # Disable replication (single-node in Minikube)

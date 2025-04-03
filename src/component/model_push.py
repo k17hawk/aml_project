@@ -1,5 +1,5 @@
 from src.exception import AMLException
-from src.config.spark_manager import spark_session
+# from src.config.spark_manager import spark_session
 import sys
 from src.logger import logging as  logger
 from src.entity.config_entity import ModelPusherConfig
@@ -8,6 +8,16 @@ from src.ml.estimator import ModelResolver
 from pyspark.ml.pipeline import PipelineModel
 import os
 from src.data_access.model_push_artifact import ModelPusherArtifactData
+from pathlib import Path
+import importlib.util
+
+spec = importlib.util.spec_from_file_location(
+    "spark_manager", 
+    Path("/app/config/spark_manager.py")
+)
+spark_manager = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(spark_manager)
+spark_session = spark_manager.SparkManager.get_spark_session()
 class ModelPusher:
 
     def __init__(self, model_trainer_artifact: ModelTrainerArtifact, model_pusher_config: ModelPusherConfig):

@@ -1,18 +1,110 @@
-# Use the official Airflow image
-FROM apache/airflow:2.10.5-python3.11
+FROM bitnami/spark:3.5.5-debian-12-r1 AS spark-base
 
-# Set Airflow environment variables
-ENV AIRFLOW_HOME="/app/airflow"
-ENV AIRFLOW__CORE__DAGBAG_IMPORT_TIMEOUT=1000
-ENV AIRFLOW__CORE__ENABLE_XCOM_PICKLING=True
-ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
-ENV AIRFLOW__CORE__DAGS_FOLDER="/app/dags"
+# Stage 2: Final Image Based on Debian Slim
+FROM debian:bookworm-slim
 
-# Copy DAGs
-COPY dags /app/dags
+# Set Non-Interactive Mode
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Set working directory
+# Define Build Arguments
+ARG SPARK_VERSION=3.5.5
+ARG HADOOP_VERSION=3.3.6
+ARG PYTHON_VERSION=3.11
+
+# Core Environment Variables
+ENV SPARK_HOME=/opt/spark \
+    HADOOP_HOME=/opt/hadoop \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+    PATH="/opt/spark/bin:/opt/spark/sbin:/opt/hadoop/bin:/opt/venv/bin:$PATH" \
+    PYSPARK_PYTHON=/opt/venv/bin/python \
+    PYSPARK_DRIVER_PYTHON=/opt/venv/bin/python \
+    SPARK_CLASSPATH="/opt/spark/jars/*:/opt/hadoop/share/hadoop/common/lib/*" \
+    SPARK_NO_DAEMONIZE=true
+
+# Install System Dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    procps \
+    wget \
+    gnupg \
+    unixodbc \
+    unixodbc-dev \
+    openjdk-17-jre-headless \
+    libgssapi-krb5-2 \
+    python${PYTHON_VERSION} \
+    python${PYTHON_VERSION}-venv \
+    python${PYTHON_VERSION}-dev \
+    curl \
+    apt-transport-https \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Microsoft ODBC Driver
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | tee /etc/apt/trusted.gpg.d/microsoft.asc >/dev/null \
+    && echo "deb [arch=amd64] https://packages.microsoft.com/debian/12/prod bookworm main" | tee /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.so /usr/lib/x86_64-linux-gnu/
+
+# Install MongoDB Shell
+RUN wget -qO - https://pgp.mongodb.com/server-8.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb-server-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/mongodb-server-keyring.gpg] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/8.0 main" | tee /etc/apt/sources.list.d/mongodb-org-8.0.list \
+    && apt-get update \
+    && apt-get install -y mongodb-org-shell=8.0.5 mongodb-mongosh=2.4.2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Spark from Base Image
+COPY --from=spark-base /opt/bitnami/spark/ /opt/spark/
+COPY --from=spark-base /opt/bitnami/scripts/ /opt/bitnami/scripts/
+
+# Install Hadoop
+RUN wget -qO /tmp/hadoop.tar.gz https://archive.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz \
+    && mkdir -p /opt/hadoop \
+    && tar -xzf /tmp/hadoop.tar.gz -C /opt/hadoop --strip-components=1 \
+    && rm -f /tmp/hadoop.tar.gz \
+    && chmod -R 755 /opt/hadoop
+
+# Kubernetes-Specific Configurations
+RUN mkdir -p /var/run/secrets/kubernetes.io/serviceaccount \
+    && mkdir -p /opt/spark/work-dir \
+    && chmod 777 /opt/spark/work-dir
+
+# Fixed Executor Wrapper Script
+RUN echo '#!/bin/bash' > /opt/spark/bin/executor \
+    && echo 'set -euo pipefail' >> /opt/spark/bin/executor \
+    && echo 'exec /opt/spark/bin/spark-class org.apache.spark.executor.CoarseGrainedExecutorBackend \' >> /opt/spark/bin/executor \
+    && echo '    --driver-url "${SPARK_DRIVER_URL}" \' >> /opt/spark/bin/executor \
+    && echo '    --executor-id "${SPARK_EXECUTOR_ID}" \' >> /opt/spark/bin/executor \
+    && echo '    --cores "${SPARK_EXECUTOR_CORES}" \' >> /opt/spark/bin/executor \
+    && echo '    --app-id "${SPARK_APPLICATION_ID}" \' >> /opt/spark/bin/executor \
+    && echo '    --hostname "$(hostname -f)" \' >> /opt/spark/bin/executor \
+    && echo '    --resourceProfileId "${SPARK_RESOURCE_PROFILE_ID:-0}"' >> /opt/spark/bin/executor \
+    && chmod +x /opt/spark/bin/executor
+
+# Python Environment
+RUN python${PYTHON_VERSION} -m venv /opt/venv \
+    && /opt/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && ln -s /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python
+
+# Install Python Dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
+
+# Cleanup
+RUN find / -type d -name '__pycache__' -exec rm -rf {} + \
+    && find / -type f -name '*.pyc' -delete \
+    && rm -rf /tmp/*
+
+# Working Directory
 WORKDIR /app
+COPY . /app
 
-# Default command
-CMD ["airflow", "scheduler"]
+# Health Check (optional)
+HEALTHCHECK --interval=30s --timeout=5s \
+    CMD curl -f http://localhost:4040/api/v1/applications || exit 1
+
+# Default Command (for debugging)
+CMD ["/bin/bash", "-c", "sleep infinity"]

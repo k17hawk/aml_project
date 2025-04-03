@@ -5,7 +5,7 @@ import sys
 from pyspark.ml.feature import StringIndexer, StringIndexerModel
 from pyspark.ml.pipeline import Pipeline, PipelineModel
 from typing import List
-from src.config.spark_manager import spark_session
+# from src.config.spark_manager import spark_session
 from src.exception import AMLException
 from src.logger import  logger
 from src.entity.artifcat_entity import DataTransformationArtifact, \
@@ -16,6 +16,16 @@ from pyspark.ml.feature import IndexToString
 from pyspark.ml.classification import RandomForestClassifier
 from src.utils import get_score
 from src.data_access.model_trainer_artifact import ModelTrainerArtifactData
+from pathlib import Path
+import importlib.util
+
+spec = importlib.util.spec_from_file_location(
+    "spark_manager", 
+    Path("/app/config/spark_manager.py")
+)
+spark_manager = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(spark_manager)
+spark_session = spark_manager.SparkManager.get_spark_session()
 
 class ModelTrainer:
 

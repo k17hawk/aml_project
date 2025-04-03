@@ -1,16 +1,36 @@
 pandas
 numpy
-google-cloud-storage==3.0.0
+# google-cloud-storage==3.0.0
 pyodbc
-apache-airflow
+# apache-airflow
 python-dotenv
 pyspark
-tqdm
+# tqdm
 pyarrow
 venv-pack 
-pymongo
-kafka-python
-confluent-kafka
--e .
-watchdog
-sqlalchemy
+# pymongo
+# kafka-python
+# confluent-kafka
+# watchdog
+# sqlalchemy
+
+
+# pandas
+# numpy
+# google-cloud-storage==3.0.0
+# pyodbc
+# apache-airflow
+# python-dotenv
+# pyspark
+# tqdm
+# pyarrow
+# venv-pack 
+# pymongo
+# kafka-python
+# confluent-kafka
+# watchdog
+# sqlalchemy
+# flask
+# requests
+# PyYAML
+
