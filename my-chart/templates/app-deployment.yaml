@@ -1,11 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: my-python-app
   labels:
     app: my-python-app
 spec:
-  replicas: 1
+  serviceName: my-python-app-headless 
   selector:
     matchLabels:
       app: my-python-app
@@ -31,7 +31,7 @@ spec:
             httpGet:
               path: /
               port: 4040
-            initialDelaySeconds: 20  # Extra time for Spark to initialize
+            initialDelaySeconds: 20
             periodSeconds: 5
             failureThreshold: 3
           livenessProbe:
@@ -62,15 +62,11 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: startup-command
-
-            # ✅ MongoDB Configuration
             - name: MONGO_DB_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.mongodb.connectionUri.secretName }}
                   key: {{ .Values.mongodb.connectionUri.secretKey }}
- #mongodb+srv://kumardahal536:Seu5paHzKgMMFwAN@cluster0.oh3gzuw.mongodb.net/
-            # ✅ SQL Server Configuration
             - name: SQL_SERVER_HOST
               valueFrom:
                 secretKeyRef:
@@ -101,10 +97,9 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.sqlserver.table.secretName }}
                   key: {{ .Values.sqlserver.table.secretKey }}
-
           volumeMounts:
             - name: spark-storage
-              mountPath: /app/artifact  # ✅ Keeps Python paths intact
+              mountPath: /app/artifact
             - name: config-volume
               mountPath: /app/config
           resources:
