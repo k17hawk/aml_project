@@ -97,6 +97,59 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.sqlserver.table.secretName }}
                   key: {{ .Values.sqlserver.table.secretKey }}
+            # Spark Core Configuration   
+            - name: SPARK_DRIVER_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SPARK_DRIVER_PORT
+              value: "29413"           
+            - name: SPARK_UI_PORT
+              value: "4040"
+            
+            #cluster
+            - name: SPARK_MASTER
+              value: "local[2]"  
+            - name: SPARK_APP_NAME
+              value: "my-python-app"
+
+            #k8s config
+            - name: SPARK_K8S_IMAGE
+              value: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            - name: SPARK_K8S_NAMESPACE
+              value: "default"
+            - name: SPARK_K8S_SERVICE_ACCOUNT
+              value: "{{ .Values.serviceAccount.name }}"
+            - name: SPARK_K8S_BATCH_DELAY
+              value: "5s"
+            
+            # Resource Configuration
+            - name: SPARK_EXECUTOR_MEMORY
+              value: "14g"
+            - name: SPARK_DRIVER_MEMORY
+              value: "14g"
+            - name: SPARK_MEMORY_FRACTION
+              value: "0.75"
+            - name: SPARK_STORAGE_FRACTION
+              value: "0.3"
+            
+            #PERFORMANCE
+            - name: SPARK_SHUFFLE_PARTITIONS
+              value: "4"
+            - name: SPARK_DEFAULT_PARALLELISM
+              value: "4"
+            
+            #serialization
+            - name: SPARK_SERIALIZER
+              value: "org.apache.spark.serializer.KryoSerializer"
+            - name: SPARK_KARYO_BUFFER_MAX
+              value: "512m"
+            
+            - name: SPARK_UI_ENABLED
+              value: "true"
+            - name: SPARK_UI_REVERSE_PROXY
+              value: "true"
+            
           volumeMounts:
             - name: spark-storage
               mountPath: /app/artifact

@@ -13,14 +13,15 @@ from functools import reduce
 from src.data_access.data_transformation_artifact import DataTransformationArtifactData
 from pathlib import Path
 import importlib.util
-
-spec = importlib.util.spec_from_file_location(
-    "spark_manager", 
-    Path("/app/config/spark_manager.py")
-)
-spark_manager = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(spark_manager)
-spark_session = spark_manager.SparkManager.get_spark_session()
+from src.config.spark_manager import SparkManager
+spark_session = SparkManager.get_spark_session()
+# spec = importlib.util.spec_from_file_location(
+#     "spark_manager", 
+#     Path("/app/config/spark_manager.py")
+# )
+# spark_manager = importlib.util.module_from_spec(spec)
+# spec.loader.exec_module(spark_manager)
+# spark_session = spark_manager.SparkManager.get_spark_session()
 
 class DataTransformation:
 

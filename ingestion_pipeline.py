@@ -1,4 +1,4 @@
-from component.data_ingestion import DataIngestion
+from src.component.data_ingestion import DataIngestion
 from src.entity.config_entity import DataIngestionConfig, TrainingPipelineConfig
 from src.entity.artifcat_entity import DataIngestionArtifact
 from src.exception import AMLException
