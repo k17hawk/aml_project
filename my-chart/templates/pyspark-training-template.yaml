@@ -1,0 +1,288 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: pyspark-ml-training-template
+  namespace: argo
+spec:
+  serviceAccountName: spark
+  entrypoint: main-pipeline
+  volumes:
+    - name: spark-storage
+      persistentVolumeClaim:
+        claimName: spark-data-pvc
+
+  templates:
+    - name: main-pipeline
+      steps:
+      
+        - - name: run-ingestion
+            template: ingestion-step
+        - - name: run-validation
+            template: validation-step
+        - - name: run-transformation
+            template: transformation-step
+        - - name: run-model-training
+            template: model-training-step
+        - - name: run-model-evaluation
+            template: model-evaluation-step
+        - - name: run-model-pusher
+            template: model-pusher-step
+
+
+    # Ingestion stage
+    - name: ingestion-step
+      container:
+        image: mypyspark:latest
+        imagePullPolicy: Never
+        command: ["/opt/venv/bin/python"]  # Use the shared virtualenv
+        args: ["/app/ingestion_pipeline.py"]
+        env:
+            - name: PYSPARK_PYTHON
+              value: /opt/venv/bin/python
+            - name: MONGO_DB_URL
+              valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.mongodb.connectionUri.secretName }}
+                    key: {{ .Values.mongodb.connectionUri.secretKey }}
+            - name: SQL_SERVER_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.host.secretName }}
+                  key: {{ .Values.sqlserver.host.secretKey }}
+            - name: SQL_SERVER_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.port.secretName }}
+                  key: {{ .Values.sqlserver.port.secretKey }}
+            - name: SQL_SERVER_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.database.secretName }}
+                  key: {{ .Values.sqlserver.database.secretKey }}
+            - name: SQL_SERVER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.username.secretName }}
+                  key: {{ .Values.sqlserver.username.secretKey }}
+            - name: SQL_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.password.secretName }}
+                  key: {{ .Values.sqlserver.password.secretKey }}
+            - name: SQL_SERVER_TABLE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.table.secretName }}
+                  key: {{ .Values.sqlserver.table.secretKey }}
+        volumeMounts:
+          - name: spark-storage
+            mountPath: /app/artifact
+          
+
+    # Validation stage
+    - name: validation-step
+      container:
+        image: mypyspark:latest
+        imagePullPolicy: Never
+        command: ["/opt/venv/bin/python"]
+        args: ["/app/validation_pipeline.py"]
+        env:
+          - name: PYSPARK_PYTHON
+            value: /opt/venv/bin/python
+          - name: MONGO_DB_URL
+            valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.mongodb.connectionUri.secretName }}
+                    key: {{ .Values.mongodb.connectionUri.secretKey }}
+        volumeMounts:
+          - name: spark-storage
+            mountPath: /app/artifact
+
+    - name: transformation-step
+      container:
+        image: mypyspark:latest
+        imagePullPolicy: Never
+        command: ["/opt/venv/bin/python"] 
+        args: ["/app/transformation_pipeline.py"]
+        env:
+            - name: PYSPARK_PYTHON
+              value: /opt/venv/bin/python
+            - name: MONGO_DB_URL
+              valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.mongodb.connectionUri.secretName }}
+                    key: {{ .Values.mongodb.connectionUri.secretKey }}
+        volumeMounts:
+          - name: spark-storage
+            mountPath: /app/artifact
+
+    - name: model-training-step
+      container:
+        image: mypyspark:latest
+        imagePullPolicy: Never
+        command: ["/opt/venv/bin/python"]
+        args: ["/app/training_pipeline.py"]
+        env:
+            - name: PYSPARK_PYTHON
+              value: /opt/venv/bin/python
+            - name: MONGO_DB_URL
+              valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.mongodb.connectionUri.secretName }}
+                    key: {{ .Values.mongodb.connectionUri.secretKey }}
+        volumeMounts:
+          - name: spark-storage
+            mountPath: /app/artifact
+          
+    - name: model-evaluation-step
+      container:
+        image: mypyspark:latest
+        imagePullPolicy: Never
+        command: ["/opt/venv/bin/python"]
+        args: ["/app/evaluation_pipeline.py"]
+        env:
+            - name: PYSPARK_PYTHON
+              value: /opt/venv/bin/python
+            - name: MONGO_DB_URL
+              valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.mongodb.connectionUri.secretName }}
+                    key: {{ .Values.mongodb.connectionUri.secretKey }}
+        volumeMounts:
+          - name: spark-storage
+            mountPath: /app/artifact
+
+    - name: model-pusher-step 
+      container:
+        image: mypyspark:latest
+        imagePullPolicy: Never
+        command: ["/opt/venv/bin/python"] 
+        args: ["/app/pusher_pipeline.py"]
+        env:
+            - name: PYSPARK_PYTHON
+              value: /opt/venv/bin/python
+            - name: MONGO_DB_URL
+              valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.mongodb.connectionUri.secretName }}
+                    key: {{ .Values.mongodb.connectionUri.secretKey }} 
+        volumeMounts:
+          - name: spark-storage
+            mountPath: /app/artifact
+
+          
+        env:
+            - name: PYSPARK_PYTHON
+              value: /opt/venv/bin/python
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: JAVA_HOME
+              value: "/opt/java/openjdk"
+            - name: HADOOP_HOME
+              value: "/opt/hadoop"
+            - name: HADOOP_CONF_DIR
+              value: "/opt/hadoop/etc/hadoop"
+            - name: SPARK_HOME
+              value: "/opt/spark"
+            - name: SPARK_LOCAL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: MONGO_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.connectionUri.secretName }}
+                  key: {{ .Values.mongodb.connectionUri.secretKey }}
+            - name: SQL_SERVER_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.host.secretName }}
+                  key: {{ .Values.sqlserver.host.secretKey }}
+            - name: SQL_SERVER_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.port.secretName }}
+                  key: {{ .Values.sqlserver.port.secretKey }}
+            - name: SQL_SERVER_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.database.secretName }}
+                  key: {{ .Values.sqlserver.database.secretKey }}
+            - name: SQL_SERVER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.username.secretName }}
+                  key: {{ .Values.sqlserver.username.secretKey }}
+            - name: SQL_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.password.secretName }}
+                  key: {{ .Values.sqlserver.password.secretKey }}
+            - name: SQL_SERVER_TABLE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.table.secretName }}
+                  key: {{ .Values.sqlserver.table.secretKey }}
+            # Spark Core Configuration   
+            - name: SPARK_DRIVER_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SPARK_DRIVER_PORT
+              value: "29413"           
+            - name: SPARK_UI_PORT
+              value: "4040"
+            
+            #cluster
+            - name: SPARK_MASTER
+              value: "local[2]"  
+            - name: SPARK_APP_NAME
+              value: "my-python-app"
+
+            #k8s config
+            - name: SPARK_K8S_IMAGE
+              value: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            - name: SPARK_K8S_NAMESPACE
+              value: "default"
+            - name: SPARK_K8S_SERVICE_ACCOUNT
+              value: "{{ .Values.serviceAccount.name }}"
+            - name: SPARK_K8S_BATCH_DELAY
+              value: "5s"
+            
+            # Resource Configuration
+            - name: SPARK_EXECUTOR_MEMORY
+              value: "14g"
+            - name: SPARK_DRIVER_MEMORY
+              value: "14g"
+            - name: SPARK_MEMORY_FRACTION
+              value: "0.75"
+            - name: SPARK_STORAGE_FRACTION
+              value: "0.3"
+            
+            #PERFORMANCE
+            - name: SPARK_SHUFFLE_PARTITIONS
+              value: "4"
+            - name: SPARK_DEFAULT_PARALLELISM
+              value: "4"
+            
+            #serialization
+            - name: SPARK_SERIALIZER
+              value: "org.apache.spark.serializer.KryoSerializer"
+            - name: SPARK_KARYO_BUFFER_MAX
+              value: "512m"
+            
+            - name: SPARK_UI_ENABLED
+              value: "true"
+            - name: SPARK_UI_REVERSE_PROXY
+              value: "true"
+
+        volumeMounts:
+            - name: spark-storage
+              mountPath: /app/artifact
+        resources:
+          requests:
+            cpu: "2"      
+            memory: "16Gi" 
+          limits:
+            cpu: "4"      
+            memory: "20Gi"
