@@ -1,25 +1,29 @@
 {{- if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: {{ .Values.rbac.roleName }}
-  namespace: {{ .Values.namespace | default "default" }}
+  name: {{ .Release.Name }}-argo-clusterrole  # Simplified naming
 rules:
 - apiGroups: [""]
   resources: ["pods", "services", "configmaps", "persistentvolumeclaims"]
   verbs: ["get", "list", "watch", "create", "delete", "deletecollection"]
+- apiGroups: ["argoproj.io"]
+  resources: ["workflows", "workflowtaskresults", "workflowtemplates"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
-  name: {{ .Values.rbac.roleBindingName }}
-  namespace: {{ .Values.namespace | default "default" }}
+  name: {{ .Release.Name }}-argo-clusterrolebinding
 subjects:
 - kind: ServiceAccount
-  name: {{ .Values.serviceAccount.name }}  # References the same name
-  namespace: {{ .Values.namespace | default "default" }}
+  name: {{ .Values.serviceAccount.name }}
+  namespace: "argo"
 roleRef:
-  kind: Role
-  name: {{ .Values.rbac.roleName }}
+  kind: ClusterRole
+  name: {{ .Release.Name }}-argo-clusterrole
   apiGroup: rbac.authorization.k8s.io
 {{- end }}

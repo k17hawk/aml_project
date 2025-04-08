@@ -1,10 +1,7 @@
 from pathlib import Path
 import os
 # SQL_SERVER = r"DESKTOP-JSV1UOD\USER_ROOT"
-# SQL_SERVER = "192.168.0.27,1433" 
-# SQL_DATABASE = "AMLDb"
-# SQL_USERNAME = "newuser"  
-# SQL_PASSWORD = "toor"  
+
 TABLE_NAME =  os.getenv("SQL_SERVER_TABLE")
 
 SQL_HOST = os.getenv("SQL_SERVER_HOST")

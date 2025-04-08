@@ -12,3 +12,4 @@ spec:
       targetPort: 2746
       nodePort: 30080
       protocol: TCP
+

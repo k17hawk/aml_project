@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argo-server
+  namespace: argo
+spec:
+  selector:
+    matchLabels:
+      app: argo-server
+  template:
+    metadata:
+      labels:
+        app: argo-server
+    spec:
+      serviceAccountName: argo-workflow
+      containers:
+      - name: argo-server
+        image: argoproj/argo-workflows:v3.6.5  
+        imagePullPolicy: IfNotPresent
+        args:
+        - server
+        - --auth-mode=server
+        - --secure=false
+        - --basehref=/
+        - --namespaced
+        ports:
+        - containerPort: 2746
