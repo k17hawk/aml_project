@@ -1,14 +1,12 @@
 
 FROM python:3.11
 
-# Set working directory
 WORKDIR /app
+COPY app.py .
+COPY requirements1.txt .
 
-# Copy and install Python dependencies
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN pip install -r requirements1.txt
 
-# Expose common ports
 EXPOSE 8080 5000
 
-CMD ["bash"]
+CMD ["python", "app.py"]

@@ -157,11 +157,11 @@ spec:
               mountPath: /app/config
           resources:
             requests:
-              cpu: {{ .Values.resources.requests.cpu }}
-              memory: {{ .Values.resources.requests.memory }}
+              cpu: "0"
+              memory: "0Gi"
             limits:
-              cpu: {{ .Values.resources.limits.cpu }}
-              memory: {{ .Values.resources.limits.memory }}
+              cpu: "0"
+              memory: "0Gi"
           command: ["/bin/sh", "-c"]
           args:
             - $(STARTUP_COMMAND)

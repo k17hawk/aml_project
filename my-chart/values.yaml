@@ -1,4 +1,4 @@
-replicaCount: 1
+replicaCount: 0
 
 image:
   repository: mypyspark
@@ -61,7 +61,7 @@ rbac:
   create: true
   roleName: "spark-cluster-role" 
   roleBindingName: "spark-rolebinding"
-  namespace: "default"  
+  namespace: "argo"  
 
 ingress:
   enabled: false
@@ -113,3 +113,8 @@ affinity: {}
 
 config:
   enabled: true
+
+workflow:
+  enabled: true
+
+

@@ -2,13 +2,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: app-config
-  namespace: default
+  namespace: argo
 data:
   startup-command: |
     set -x  
     /opt/venv/bin/python -m pip install --no-cache-dir pandas numpy google-cloud-storage==3.0.0 pyodbc python-dotenv tqdm pyarrow \
-        venv-pack pymongo flask watchdog requests kafka-python confluent-kafka PyYAML 2>&1 | tee /tmp/install.log && \
-    /opt/venv/bin/python /app/test.py 2>&1 | tee /tmp/script.log
+        venv-pack pymongo flask watchdog requests kafka-python confluent-kafka PyYAML 2>&1
 
 
   spark_manager.py: |
