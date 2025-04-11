@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gcs-kafka-producer
+spec:
+  replicas: 2  # For HA
+  selector:
+    matchLabels:
+      app: gcs-kafka-producer
+  template:
+    metadata:
+      labels:
+        app: gcs-kafka-producer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+    spec:
+      containers:
+      - name: producer
+        image: your-registry/gcs-kafka-producer:latest
+        env:
+        - name: GCP_CREDENTIAL_PATH
+          value: /secrets/gcp/key.json
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-service:9092"
+        - name: GCS_BUCKET_NAME
+          value: "prediction-data-bucket"
+        - name: GCS_FILE_PREFIX
+          value: "incoming/"
+        - name: POLL_INTERVAL_SEC
+          value: "300"
+        volumeMounts:
+        - name: gcp-secret
+          mountPath: /secrets/gcp
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: gcp-secret
+        secret:
+          secretName: gcp-service-account

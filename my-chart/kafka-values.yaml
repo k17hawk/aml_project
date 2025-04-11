@@ -1,0 +1,54 @@
+global:
+  storageClass: "standard"
+
+replicaCount: 3
+
+auth:
+  enabled: false
+
+kraft:
+  enabled: true
+  clusterId: "5bd2abf2-10a6-494d-a783-6b9f4a0c72ca"
+
+listeners:
+  client:
+    protocol: PLAINTEXT
+    port: 9092
+    advertisedListeners:  # Explicitly set advertised listeners
+      - PLAINTEXT://kafka.default.svc.cluster.local:9092
+
+persistence:
+  enabled: true
+  size: 8Gi
+
+service:
+  type: ClusterIP
+  # Correct port definition (map format)
+  ports:
+    client: 9092        # For producers/consumers
+    controller: 9093    # Required for KRaft
+    interbroker: 9094   # Required for broker communication
+
+# configurationOverrides:
+#   auto.create.topics.enable: "true"
+#   num.partitions: "3"
+#   default.replication.factor: "2"
+#   log.retention.hours: "168"
+#   log.segment.bytes: "1073741824"
+#   delete.topic.enable: "true"
+#   # KRaft-specific settings
+#   process.roles: "broker,controller"  # Critical for KRaft mode
+
+# kafkaConnect:
+#   enabled: true
+#   replicaCount: 2
+#   configurationOverrides:
+#     topic.creation.enable: "true"
+#     topic.creation.default.replication.factor: "2"
+#     topic.creation.default.partitions: "3"
+#   env:
+#     - name: CONNECT_TOPIC_CREATION_ENABLE
+#       value: "true"
+#     - name: CONNECT_GROUP_ID
+#       value: "connect-cluster"
+#   plugins: []
