@@ -33,4 +33,4 @@ sqlalchemy
 flask
 requests
 PyYAML
-
+tenacity

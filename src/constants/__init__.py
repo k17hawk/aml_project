@@ -20,6 +20,23 @@ DRIVER_MEMORY = os.getenv('SPARK_DRIVER_MEMORY')
 BUCKET_NAME = 'abc_aml_data_bucket'
 GCS_FILE_NAME = 'aml_input_data.csv'
 
+GCP_CREDENTIAL_PATH = os.getenv('GCP_CREDENTIAL_PATH', '/etc/gcp-key/key.json') 
+KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka.default.svc.cluster.local:9092')
+
+TOPIC_NAME = os.getenv('KAFKA_TOPIC', 'my-gcs-data')
+PREDICTION_BUCKET_NAME = os.getenv('GCS_BUCKET_NAME', 'prediction-data-pipe')
+STATE_BUCKET = os.getenv('GCS_STATE_BUCKET', 'pipeline-state-bucket')
+FILE_PREFIX = os.getenv('GCS_FILE_PREFIX', 'predictions/')  
+FILE_PATTERN = os.getenv('GCS_FILE_PATTERN', r'prediction_\d{8}_\d{6}\.csv$') 
+POLL_INTERVAL_SEC = int(os.getenv('POLL_INTERVAL_SEC', '300')) 
+MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))
+PROCESSED_LOG_PATH = os.getenv('PROCESSED_LOG_PATH', '/var/processed-files/state.log')
+
+
+POLL_TIMEOUT_MS = 5000
+OUTPUT_DIR = os.path.join('data', 'inbox-data') 
+BATCH_SIZE = os.getenv('BATCH_SIZE', 1000) 
+MAX_FILE_AGE_MINUTES = 5  # Rotate files after X minutes
 
 import os
 from dataclasses import dataclass

@@ -1,0 +1,60 @@
+global:
+  storageClass: "standard"
+
+replicaCount: 3
+
+auth:
+  enabled: false  
+
+kraft:
+  enabled: true
+  clusterId: "5bd2abf2-10a6-494d-a783-6b9f4a0c72ca"
+
+listeners:
+  client:
+    protocol: PLAINTEXT
+    port: 9092
+    advertisedListeners:
+      - PLAINTEXT://kafka.default.svc.cluster.local:9092
+
+persistence:
+  enabled: true
+  size: 8Gi
+
+service:
+  type: ClusterIP
+  ports:
+    client: 9092
+    controller: 9093
+    interbroker: 9094
+
+replicaCount: 1
+
+kafkaSidecars:
+  enabled: true 
+  image:
+    repository: pythonkafka
+    tag: latest
+    pullPolicy: Never
+
+  env:
+    GCS_BUCKET_NAME: "prediction-data-pipe"
+    KAFKA_BOOTSTRAP_SERVERS: "kafka.default.svc.cluster.local:9092"
+    GCS_FILE_PATTERN: "prediction_\\d{8}_\\d{6}\\.csv$"
+
+  gcs:
+    existingSecret: "gcp-service-account"
+    secretKey: "key.json"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: "standard"

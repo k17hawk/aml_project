@@ -1,67 +1,99 @@
-from confluent_kafka import Consumer, KafkaException, KafkaError
-import sys
-import json
 import os
-import pandas as pd
+import csv
+import json
+import logging
+from datetime import datetime
+from kafka import KafkaConsumer
+from typing import Dict, Any
 
-# Kafka configuration
-conf = {
-    'bootstrap.servers': 'localhost:9092',  
-    'group.id': 'csv-consumer-group',
-    'auto.offset.reset': 'earliest'
-}
+from src.constants import KAFKA_BOOTSTRAP_SERVERS, TOPIC_NAME,OUTPUT_DIR, BATCH_SIZE,MAX_FILE_AGE_MINUTES
+from src.logger import logger
 
-consumer = Consumer(conf)
+class KafkaCSVConsumer:
+    def __init__(self):
+        self.consumer = self._init_consumer()
+        self.current_file = None
+        self.current_writer = None
+        self.file_start_time = None
+        self.message_count = 0
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-topic = 'gcs-data'
+    def _init_consumer(self) -> KafkaConsumer:
+        """Initialize Kafka consumer with error handling."""
+        try:
+            return KafkaConsumer(
+                TOPIC_NAME,
+                bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+                auto_offset_reset='earliest',
+                value_deserializer=lambda x: json.loads(x.decode('utf-8')),
+                consumer_timeout_ms=10000
+            )
+        except Exception as e:
+            logger.error(f"Failed to initialize Kafka consumer: {str(e)}")
+            raise
 
-# Subscribe to the topic
-consumer.subscribe([topic])
+    def _rotate_file(self):
+        """Close current file and open a new one based on time/size."""
+        if self.current_file:
+            self.current_file.close()
+            logger.info(f"Closed file: {self.current_file.name}")
 
-# Path to save the data in CSV format
-csv_file = os.path.join("data", "inbox-data", "data.csv")
-os.makedirs(os.path.dirname(csv_file), exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = os.path.join(OUTPUT_DIR, f"output_{timestamp}.csv")
+        self.current_file = open(filename, 'w', newline='')
+        self.current_writer = csv.writer(self.current_file)
+        self.file_start_time = datetime.now()
+        self.message_count = 0
+        logger.info(f"Created new file: {filename}")
 
-# Initialize an empty DataFrame to collect messages
-df = pd.DataFrame()
+    def _should_rotate(self) -> bool:
+        """Check if we need to rotate the output file."""
+        if not self.current_file:
+            return True
+        if self.message_count >= BATCH_SIZE:
+            return True
+        if (datetime.now() - self.file_start_time).total_seconds() > MAX_FILE_AGE_MINUTES * 60:
+            return True
+        return False
 
-# Set up a callback to handle assignments
-def print_assignment(consumer, partitions):
-    print('Assignment:', partitions)
+    def _write_record(self, record: Dict[str, Any]):
+        """Write a single record to CSV."""
+        try:
+            # Extract data from Kafka message
+            data = record['data']  # Assuming producer sends {'data': 'csv,row,here'}
+            if isinstance(data, str):
+                # If data is a CSV string, split into columns
+                self.current_writer.writerow(data.split(','))
+            elif isinstance(data, dict):
+                # If data is a dict, write as key-value pairs
+                self.current_writer.writerow(data.values())
+            else:
+                logger.warning(f"Unsupported data format: {type(data)}")
+            
+            self.message_count += 1
+        except Exception as e:
+            logger.error(f"Failed to write record: {str(e)}")
 
-# Set up a callback to handle assignments
-consumer.subscribe([topic], on_assign=print_assignment)
+    def run(self):
+        """Main consumption loop."""
+        logger.info(f"Starting consumer writing to {OUTPUT_DIR}")
+        try:
+            for message in self.consumer:
+                if self._should_rotate():
+                    self._rotate_file()
+                
+                self._write_record(message.value)
+                
+                # Commit offsets manually for at-least-once semantics
+                self.consumer.commit()
+                
+        except KeyboardInterrupt:
+            logger.info("Shutting down gracefully...")
+        except Exception as e:
+            logger.error(f"Fatal error: {str(e)}", exc_info=True)
+        finally:
+            if self.current_file:
+                self.current_file.close()
+            self.consumer.close()
+            logger.info("Consumer stopped")
 
-try:
-    while True:
-        msg = consumer.poll(timeout=1.0)
-        if msg is None:
-            continue
-        if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                # End of partition event
-                sys.stderr.write('%% %s [%d] reached end at offset %d\n' % 
-                                 (msg.topic(), msg.partition(), msg.offset()))
-            elif msg.error():
-                raise KafkaException(msg.error())
-        else:
-            # Proper message
-            print('Received message: {}'.format(msg.value().decode('utf-8')))
-            data = json.loads(msg.value().decode('utf-8'))
-            print(data)
-
-            # Convert the message to a DataFrame
-            new_data = pd.DataFrame([data])
-
-            # Append the new data to the existing DataFrame
-            df = pd.concat([df, new_data], ignore_index=True)
-
-            # Save the DataFrame to a CSV file
-            df.to_csv(csv_file, index=False)
-
-            print(f"Saved data to CSV: {data}")
-
-except KeyboardInterrupt:
-    pass
-finally:
-    consumer.close()

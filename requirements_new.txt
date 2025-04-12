@@ -1,0 +1,10 @@
+kafka-python
+google-cloud-storage
+pandas
+requests
+protobuf
+PyYAML
+tenacity
+venv-pack 
+kafka-python
+confluent-kafka

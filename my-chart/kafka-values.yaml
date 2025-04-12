@@ -1,10 +1,13 @@
+# kafka-values.yaml
+
+# --- Existing Kafka Config (unchanged) ---
 global:
   storageClass: "standard"
 
 replicaCount: 3
 
 auth:
-  enabled: false
+  enabled: false  # No authentication
 
 kraft:
   enabled: true
@@ -14,7 +17,7 @@ listeners:
   client:
     protocol: PLAINTEXT
     port: 9092
-    advertisedListeners:  # Explicitly set advertised listeners
+    advertisedListeners:
       - PLAINTEXT://kafka.default.svc.cluster.local:9092
 
 persistence:
@@ -23,32 +26,42 @@ persistence:
 
 service:
   type: ClusterIP
-  # Correct port definition (map format)
   ports:
-    client: 9092        # For producers/consumers
-    controller: 9093    # Required for KRaft
-    interbroker: 9094   # Required for broker communication
+    client: 9092
+    controller: 9093
+    interbroker: 9094
 
-# configurationOverrides:
-#   auto.create.topics.enable: "true"
-#   num.partitions: "3"
-#   default.replication.factor: "2"
-#   log.retention.hours: "168"
-#   log.segment.bytes: "1073741824"
-#   delete.topic.enable: "true"
-#   # KRaft-specific settings
-#   process.roles: "broker,controller"  # Critical for KRaft mode
+# --- New: GCS-to-Kafka Microservice Config ---
+gcsToKafka:
+  enabled: true  # Deploy the microservice alongside Kafka
+  image:
+    repository: your-repo/gcs-to-kafka  # Update this!
+    tag: latest
+    pullPolicy: IfNotPresent
 
-# kafkaConnect:
-#   enabled: true
-#   replicaCount: 2
-#   configurationOverrides:
-#     topic.creation.enable: "true"
-#     topic.creation.default.replication.factor: "2"
-#     topic.creation.default.partitions: "3"
-#   env:
-#     - name: CONNECT_TOPIC_CREATION_ENABLE
-#       value: "true"
-#     - name: CONNECT_GROUP_ID
-#       value: "connect-cluster"
-#   plugins: []
+  # GCS Configuration
+  gcs:
+    bucketName: "prediction-data-pipe"
+    existingSecret: "gcp-service-account"  # Reuse your existing secret
+    secretKey: "key.json"
+
+  # Kafka Connection (auto-matches your Kafka config)
+  kafka:
+    bootstrapServers: "kafka.default.svc.cluster.local:9092"  # Same as advertisedListener
+    topic: "gcs_csv_data"
+    securityProtocol: "PLAINTEXT"  # Matches auth.enabled: false
+
+  # Resources
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # Persistence (optional, for processed file tracking)
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: "standard"  # Reuse Kafka's storage class
