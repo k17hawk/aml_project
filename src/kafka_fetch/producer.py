@@ -1,175 +1,179 @@
 import time
 import json
 import pandas as pd
+import re
+import threading
 from kafka import KafkaProducer
 from google.cloud import storage
-from src.constants import PREDICTION_BUCKET_NAME,PROCESSED_LOG_PATH,\
-    FILE_PREFIX,GCP_CREDENTIAL_PATH, KAFKA_BOOTSTRAP_SERVERS, TOPIC_NAME,MAX_RETRIES,FILE_PATTERN,POLL_INTERVAL_SEC
-from src.logger import logger
 import io
-import re,os
-from datetime import datetime, timedelta
+from src.logger import logger
+from typing import List, Dict, Any
+from google.cloud import storage, pubsub_v1
 from kafka.errors import KafkaError
-from google.oauth2 import service_account
-from google.api_core.exceptions import GoogleAPIError
-from tenacity import retry, stop_after_attempt, wait_exponential
-from typing import List, Dict, Optional
+from google.api_core.exceptions import GoogleAPIError, RetryError
 
+class GcsEventDrivenProducer:
+    def __init__(
+        self,
+        project_id: str,
+        subscription_name: str,
+        bootstrap_servers: str = '127.0.0.1:9092',
+        topic_name: str = 'my-gcs-data',
+        bucket_name: str = 'aml-data-bucket',
+        max_retries: int = 3,
+        retry_delay: int = 5
+    ):
+        self.topic_name = topic_name
+        self.bucket_name = bucket_name
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self._shutdown_event = threading.Event()
+        
+        # Pub/Sub client
+        self.subscriber = pubsub_v1.SubscriberClient()
+        self.subscription_path = self.subscriber.subscription_path(
+            project_id, subscription_name)
+        
+        # Kafka producer
+        self.producer = KafkaProducer(
+            bootstrap_servers=bootstrap_servers,
+            value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+            retries=3
+        )
+        
+        # GCS client
+        self.storage_client = storage.Client()
+        
+        logger.info("GcsEventDrivenProducer initialized")
 
-class GCSKafkaProducer:
-    def __init__(self):
-        self.storage_client = self._init_gcs_client()
-        self.producer = self._init_kafka_producer()
-        self._ensure_processed_log()
-    
-    def _ensure_processed_log(self):
-        """Ensure the processed files log exists."""
-        os.makedirs(os.path.dirname(PROCESSED_LOG_PATH), exist_ok=True)
-        if not os.path.exists(PROCESSED_LOG_PATH):
-            open(PROCESSED_LOG_PATH, 'w').close()
-    
-
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    def _init_gcs_client(self) -> storage.Client:
-        """Initialize GCS client with retry on connection issues."""
-        try:
-            if os.path.exists(GCP_CREDENTIAL_PATH):
-                credentials = service_account.Credentials.from_service_account_file(
-                    GCP_CREDENTIAL_PATH,
-                    scopes=["https://www.googleapis.com/auth/cloud-platform"]
-                )
-                logger.info("GCS client initialized with service account")
-                return storage.Client(credentials=credentials)
-            logger.info("GCS client initialized with default credentials")
-            return storage.Client()
-        except Exception as e:
-            logger.error(f"GCS client initialization failed: {str(e)}")
-            raise
-
-    @retry(stop=stop_after_attempt(3))
-    def _init_kafka_producer(self) -> KafkaProducer:
-        """Initialize Kafka producer with retry on connection issues."""
-        try:
-            return KafkaProducer(
-                bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-                value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-                acks='all',
-                retries=MAX_RETRIES,
-                compression_type='gzip',
-                linger_ms=500,
-                batch_size=16384,
-                request_timeout_ms=15000
-            )
-        except Exception as e:
-            logger.error(f"Kafka producer initialization failed: {str(e)}")
-            raise
-
-    def _delivery_report(self, err: Optional[KafkaError], msg) -> None:
-        """Callback for Kafka message delivery status."""
-        if err:
-            logger.error(f"Message failed delivery: {err}")
+    def _delivery_report(self, err=None, metadata=None):
+        """Callback for message delivery reports"""
+        if err is not None:
+            logger.error(f'Message delivery failed: {err}')
         else:
-            logger.debug(f"Delivered to {msg.topic()} [Partition {msg.partition()}]")
+            logger.info(
+                f'Message delivered to {self.topic_name} '
+                f'[Partition: {metadata.partition if metadata else "N/A"}]'
+            )
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-    def _get_new_files(self) -> List[str]:
-        """List new files in GCS with retry on API failures."""
+    def _download_with_retry(self, blob):
+        """Download blob content with retry logic"""
+        for attempt in range(self.max_retries):
+            try:
+                return blob.download_as_text()
+            except (GoogleAPIError, RetryError) as e:
+                if attempt == self.max_retries - 1:
+                    raise
+                logger.warning(f"Download attempt {attempt + 1} failed, retrying...")
+                time.sleep(self.retry_delay)
+
+    def _process_gcs_event(self, event: dict):
+        """Process a single GCS event notification with robust error handling"""
         try:
-            bucket = self.storage_client.bucket(PREDICTION_BUCKET_NAME)
-            processed_files = self._load_processed_files()
+            blob_name = event['name']
+            if not re.search(r'Transactions_\d{8}_\d{6}\.csv$', blob_name):
+                logger.info(f"Skipping non-matching file: {blob_name}")
+                return 0
             
-            new_files = []
-            for blob in bucket.list_blobs(prefix=FILE_PREFIX):
-                if (re.fullmatch(FILE_PATTERN, blob.name) and 
-                    blob.name not in processed_files):
-                    new_files.append(blob.name)
-                    logger.info(f"New file detected: {blob.name}")
-
-            return new_files
-        except Exception as e:
-            logger.error(f"Failed to list GCS files: {str(e)}")
-            return []
-
-    def _load_processed_files(self) -> set:
-        """Load already processed files from persistent log."""
-        with open(PROCESSED_LOG_PATH, 'r') as f:
-            return set(line.strip() for line in f.readlines())
-
-    def _mark_processed(self, filename: str):
-        """Record processed file in persistent log."""
-        with open(PROCESSED_LOG_PATH, 'a') as f:
-            f.write(f"{filename}\n")
-
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    def _download_file(self, blob) -> str:
-        """Download file content with retry on failures."""
-        return blob.download_as_text()
-
-    @retry(stop=stop_after_attempt(3))
-    def _archive_file(self, blob, new_path: str):
-        """Move file to archive location with retry."""
-        bucket = self.storage_client.bucket(PREDICTION_BUCKET_NAME)
-        bucket.rename_blob(blob, new_path)
-
-    def _process_file(self, file_path: str) -> bool:
-        """Process a single file end-to-end."""
-        try:
-            blob = self.storage_client.bucket(PREDICTION_BUCKET_NAME).blob(file_path)
-            content = self._download_file(blob)
+            logger.info(f"Processing new file: {blob_name}")
+            blob = self.storage_client.bucket(self.bucket_name).blob(blob_name)
             
-            # Parse CSV (assuming CSV format per Helm config)
-            records = []
-            for line in content.split('\n'):
-                if line.strip():
-                    records.append({"data": line, "source_file": file_path})
-            
-            # Publish to Kafka
-            for record in records:
-                self.producer.send(
-                    TOPIC_NAME,
-                    value=record
-                ).add_callback(self._delivery_report)
-            
-            # Archive and mark processed
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            archive_path = f"processed/{timestamp}/{os.path.basename(file_path)}"
-            self._archive_file(blob, archive_path)
-            self._mark_processed(file_path)
-            
-            logger.info(f"Processed {len(records)} records from {file_path}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Permanent failure processing {file_path}: {str(e)}")
-            return False
-
-    def run(self):
-        """Main processing loop."""
-        logger.info("Starting GCS to Kafka producer")
-        try:
-            while True:
-                start_time = time.time()
+            try:
+                content = self._download_with_retry(blob)
                 
-                new_files = self._get_new_files()
-                if new_files:
-                    logger.info(f"Processing {len(new_files)} new files")
-                    for file_path in new_files:
-                        self._process_file(file_path)
+                logger.debug(f"File content: {content[:200]}...")  # Log first 200 chars
                 
-                # Flush Kafka producer periodically
+                df = pd.read_csv(io.StringIO(content))
+                records = df.to_dict(orient="records")
+                
+                for record in records:
+                    if self._shutdown_event.is_set():
+                        logger.info("Shutdown detected, aborting message sending")
+                        return 0
+                    
+                    future = self.producer.send(self.topic_name, value=record)
+                    future.add_callback(
+                        lambda metadata: self._delivery_report(None, metadata))
+                    future.add_errback(
+                        lambda err: self._delivery_report(err, None))
+                
                 self.producer.flush()
+                logger.info(f"Successfully sent {len(records)} records from {blob_name}")
+                return len(records)
                 
-                # Sleep for remaining poll interval
-                elapsed = time.time() - start_time
-                sleep_time = max(0, POLL_INTERVAL_SEC - elapsed)
-                logger.info(f"Next poll in {sleep_time:.1f}s")
-                time.sleep(sleep_time)
-                
-        except KeyboardInterrupt:
-            logger.info("Shutting down gracefully")
+            except Exception as download_error:
+                logger.error(f"Failed to process file {blob_name}: {str(download_error)}")
+                raise
+            
         except Exception as e:
-            logger.critical(f"Fatal error: {str(e)}", exc_info=True)
-        finally:
-            self.producer.close()
-            logger.info("Kafka producer closed")
+            logger.error(f"Error processing event: {str(e)}", exc_info=True)
+            raise
 
+    def start_consuming(self):
+        """Start listening for GCS events with robust error handling"""
+        def callback(message: pubsub_v1.subscriber.message.Message):
+            try:
+                if self._shutdown_event.is_set():
+                    logger.info("Shutdown detected, skipping message processing")
+                    message.nack()  # Will be redelivered after shutdown
+                    return
+                
+                event = json.loads(message.data.decode('utf-8'))
+                self._process_gcs_event(event)
+                message.ack()
+            except Exception as e:
+                logger.error(f"Error processing message: {str(e)}")
+                message.nack()  # Negative acknowledgment - redeliver
+        
+        logger.info("Starting to listen for GCS events...")
+        streaming_pull_future = self.subscriber.subscribe(
+            self.subscription_path, callback=callback)
+        
+        try:
+            while not self._shutdown_event.is_set():
+                try:
+                    streaming_pull_future.result(timeout=1)  # Check more frequently
+                except TimeoutError:
+                    continue  # Normal operation, just checking for shutdown
+        except KeyboardInterrupt:
+            logger.info("Received keyboard interrupt, initiating shutdown...")
+            self._shutdown_event.set()
+        except Exception as e:
+            logger.error(f"Unexpected error in event consumer: {str(e)}")
+            self._shutdown_event.set()
+        finally:
+            self.shutdown()
+
+    def shutdown(self):
+        """Graceful shutdown procedure"""
+        if not self._shutdown_event.is_set():
+            self._shutdown_event.set()
+        
+        logger.info("Initiating shutdown...")
+        try:
+            # Close Kafka producer
+            if hasattr(self, 'producer'):
+                self.producer.close(timeout=5)
+                logger.info("Kafka producer closed")
+            
+            # Close Pub/Sub subscriber
+            if hasattr(self, 'subscriber'):
+                self.subscriber.close()
+                logger.info("Pub/Sub subscriber closed")
+            
+            logger.info("Shutdown completed successfully")
+        except Exception as e:
+            logger.error(f"Error during shutdown: {str(e)}")
+    
+    def force_shutdown(self):
+        """Force immediate shutdown without waiting for cleanups"""
+        logger.warning("FORCE SHUTDOWN INITIATED!")
+        self._shutdown_event.set()
+        
+        # Immediately close resources without waiting
+        if hasattr(self, 'producer'):
+            self.producer.close(timeout=0)
+        if hasattr(self, 'subscriber'):
+            self.subscriber.close()
+        
+        logger.warning("FORCE SHUTDOWN COMPLETED")

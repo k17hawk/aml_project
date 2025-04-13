@@ -20,18 +20,16 @@ DRIVER_MEMORY = os.getenv('SPARK_DRIVER_MEMORY')
 BUCKET_NAME = 'abc_aml_data_bucket'
 GCS_FILE_NAME = 'aml_input_data.csv'
 
+GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'data-prediction-pipe-data')
 GCP_CREDENTIAL_PATH = os.getenv('GCP_CREDENTIAL_PATH', '/etc/gcp-key/key.json') 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka.default.svc.cluster.local:9092')
 
 TOPIC_NAME = os.getenv('KAFKA_TOPIC', 'my-gcs-data')
-PREDICTION_BUCKET_NAME = os.getenv('GCS_BUCKET_NAME', 'prediction-data-pipe')
+PREDICTION_BUCKET_NAME = os.getenv('GCS_BUCKET_NAME', 'aml-data-bucket')
 STATE_BUCKET = os.getenv('GCS_STATE_BUCKET', 'pipeline-state-bucket')
 FILE_PREFIX = os.getenv('GCS_FILE_PREFIX', 'predictions/')  
-FILE_PATTERN = os.getenv('GCS_FILE_PATTERN', r'prediction_\d{8}_\d{6}\.csv$') 
-POLL_INTERVAL_SEC = int(os.getenv('POLL_INTERVAL_SEC', '300')) 
-MAX_RETRIES = int(os.getenv('MAX_RETRIES', '3'))
-PROCESSED_LOG_PATH = os.getenv('PROCESSED_LOG_PATH', '/var/processed-files/state.log')
-
+FILE_PATTERN = os.getenv('GCS_FILE_PATTERN', r'Transactions_\d{8}_\d{6}\.csv$') 
+TOPIC_NAME_SUB = os.getenv('TOPIC_NAME_SUB', "my-gcs-data-sub")
 
 POLL_TIMEOUT_MS = 5000
 OUTPUT_DIR = os.path.join('data', 'inbox-data') 
@@ -47,7 +45,7 @@ from datetime import datetime
 # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("C:/Users/lang-chain/Documents/aml_project/cloud-api.json"))
 
 #docker env
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("cloud-api.json"))
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("data-prediction-pipe-data-61d5e9bb16fa.json"))
 
 
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")

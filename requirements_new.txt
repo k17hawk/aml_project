@@ -8,3 +8,4 @@ tenacity
 venv-pack 
 kafka-python
 confluent-kafka
+google-cloud-pubsub
