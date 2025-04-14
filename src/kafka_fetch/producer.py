@@ -11,15 +11,16 @@ from typing import List, Dict, Any
 from google.cloud import storage, pubsub_v1
 from kafka.errors import KafkaError
 from google.api_core.exceptions import GoogleAPIError, RetryError
-
+from src.constants import credentials
 class GcsEventDrivenProducer:
     def __init__(
         self,
         project_id: str,
         subscription_name: str,
-        bootstrap_servers: str = '127.0.0.1:9092',
-        topic_name: str = 'my-gcs-data',
-        bucket_name: str = 'aml-data-bucket',
+        bootstrap_servers: str,
+        topic_name: str,
+        bucket_name: str,
+        file_pattern: str,
         max_retries: int = 3,
         retry_delay: int = 5
     ):
@@ -27,23 +28,20 @@ class GcsEventDrivenProducer:
         self.bucket_name = bucket_name
         self.max_retries = max_retries
         self.retry_delay = retry_delay
+        self.file_pattern = file_pattern
         self._shutdown_event = threading.Event()
         
-        # Pub/Sub client
         self.subscriber = pubsub_v1.SubscriberClient()
         self.subscription_path = self.subscriber.subscription_path(
             project_id, subscription_name)
-        
-        # Kafka producer
+
         self.producer = KafkaProducer(
             bootstrap_servers=bootstrap_servers,
             value_serializer=lambda v: json.dumps(v).encode('utf-8'),
             retries=3
         )
-        
-        # GCS client
-        self.storage_client = storage.Client()
-        
+
+        self.storage_client = storage.Client(credentials=credentials)
         logger.info("GcsEventDrivenProducer initialized")
 
     def _delivery_report(self, err=None, metadata=None):
@@ -71,7 +69,7 @@ class GcsEventDrivenProducer:
         """Process a single GCS event notification with robust error handling"""
         try:
             blob_name = event['name']
-            if not re.search(r'Transactions_\d{8}_\d{6}\.csv$', blob_name):
+            if not re.search(self.file_pattern, blob_name):
                 logger.info(f"Skipping non-matching file: {blob_name}")
                 return 0
             
@@ -81,7 +79,7 @@ class GcsEventDrivenProducer:
             try:
                 content = self._download_with_retry(blob)
                 
-                logger.debug(f"File content: {content[:200]}...")  # Log first 200 chars
+                logger.debug(f"File content: {content[:200]}...") 
                 
                 df = pd.read_csv(io.StringIO(content))
                 records = df.to_dict(orient="records")
@@ -115,7 +113,7 @@ class GcsEventDrivenProducer:
             try:
                 if self._shutdown_event.is_set():
                     logger.info("Shutdown detected, skipping message processing")
-                    message.nack()  # Will be redelivered after shutdown
+                    message.nack()  
                     return
                 
                 event = json.loads(message.data.decode('utf-8'))
@@ -123,7 +121,7 @@ class GcsEventDrivenProducer:
                 message.ack()
             except Exception as e:
                 logger.error(f"Error processing message: {str(e)}")
-                message.nack()  # Negative acknowledgment - redeliver
+                message.nack()  
         
         logger.info("Starting to listen for GCS events...")
         streaming_pull_future = self.subscriber.subscribe(
@@ -132,9 +130,9 @@ class GcsEventDrivenProducer:
         try:
             while not self._shutdown_event.is_set():
                 try:
-                    streaming_pull_future.result(timeout=1)  # Check more frequently
+                    streaming_pull_future.result(timeout=1) 
                 except TimeoutError:
-                    continue  # Normal operation, just checking for shutdown
+                    continue 
         except KeyboardInterrupt:
             logger.info("Received keyboard interrupt, initiating shutdown...")
             self._shutdown_event.set()
@@ -151,12 +149,10 @@ class GcsEventDrivenProducer:
         
         logger.info("Initiating shutdown...")
         try:
-            # Close Kafka producer
             if hasattr(self, 'producer'):
                 self.producer.close(timeout=5)
                 logger.info("Kafka producer closed")
-            
-            # Close Pub/Sub subscriber
+
             if hasattr(self, 'subscriber'):
                 self.subscriber.close()
                 logger.info("Pub/Sub subscriber closed")
@@ -170,7 +166,6 @@ class GcsEventDrivenProducer:
         logger.warning("FORCE SHUTDOWN INITIATED!")
         self._shutdown_event.set()
         
-        # Immediately close resources without waiting
         if hasattr(self, 'producer'):
             self.producer.close(timeout=0)
         if hasattr(self, 'subscriber'):

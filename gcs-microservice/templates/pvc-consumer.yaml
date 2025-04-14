@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "gcs-microservice.fullname" . }}-pvc
+  name: {{ include "gcs-microservice.fullname" . }}-consumer-pvc
   labels:
     {{- include "gcs-microservice.labels" . | nindent 4 }}
 spec:

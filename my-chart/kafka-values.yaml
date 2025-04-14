@@ -30,38 +30,3 @@ service:
     client: 9092
     controller: 9093
     interbroker: 9094
-
-# --- New: GCS-to-Kafka Microservice Config ---
-gcsToKafka:
-  enabled: true  # Deploy the microservice alongside Kafka
-  image:
-    repository: your-repo/gcs-to-kafka  # Update this!
-    tag: latest
-    pullPolicy: IfNotPresent
-
-  # GCS Configuration
-  gcs:
-    bucketName: "prediction-data-pipe"
-    existingSecret: "gcp-service-account"  # Reuse your existing secret
-    secretKey: "key.json"
-
-  # Kafka Connection (auto-matches your Kafka config)
-  kafka:
-    bootstrapServers: "kafka.default.svc.cluster.local:9092"  # Same as advertisedListener
-    topic: "gcs_csv_data"
-    securityProtocol: "PLAINTEXT"  # Matches auth.enabled: false
-
-  # Resources
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-
-  # Persistence (optional, for processed file tracking)
-  persistence:
-    enabled: true
-    size: 1Gi
-    storageClass: "standard"  # Reuse Kafka's storage class

@@ -38,9 +38,12 @@ kafkaSidecars:
     pullPolicy: Never
 
   env:
-    GCS_BUCKET_NAME: "prediction-data-pipe"
+    GCP_PROJECT_ID: "data-prediction-pipe-data"
+    TOPIC_NAME: "my-gcs-data"
+    TOPIC_NAME_SUB: "my-gcs-data-sub"
+    PREDICTION_BUCKET_NAME: "aml-data-bucket"
     KAFKA_BOOTSTRAP_SERVERS: "kafka.default.svc.cluster.local:9092"
-    GCS_FILE_PATTERN: "prediction_\\d{8}_\\d{6}\\.csv$"
+    FILE_PATTERN: "Transactions_\\d{8}_\\d{6}\\.csv$"
 
   gcs:
     existingSecret: "gcp-service-account"

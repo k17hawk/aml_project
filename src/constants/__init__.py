@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from google.oauth2 import service_account
 # SQL_SERVER = r"DESKTOP-JSV1UOD\USER_ROOT"
 
 TABLE_NAME =  os.getenv("SQL_SERVER_TABLE")
@@ -20,21 +21,25 @@ DRIVER_MEMORY = os.getenv('SPARK_DRIVER_MEMORY')
 BUCKET_NAME = 'abc_aml_data_bucket'
 GCS_FILE_NAME = 'aml_input_data.csv'
 
-GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID', 'data-prediction-pipe-data')
-GCP_CREDENTIAL_PATH = os.getenv('GCP_CREDENTIAL_PATH', '/etc/gcp-key/key.json') 
-KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka.default.svc.cluster.local:9092')
+GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID','data-prediction-pipe-data')
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GCP_CREDENTIAL_PATH', '/etc/gcp-key/key.json') 
 
-TOPIC_NAME = os.getenv('KAFKA_TOPIC', 'my-gcs-data')
-PREDICTION_BUCKET_NAME = os.getenv('GCS_BUCKET_NAME', 'aml-data-bucket')
-STATE_BUCKET = os.getenv('GCS_STATE_BUCKET', 'pipeline-state-bucket')
-FILE_PREFIX = os.getenv('GCS_FILE_PREFIX', 'predictions/')  
-FILE_PATTERN = os.getenv('GCS_FILE_PATTERN', r'Transactions_\d{8}_\d{6}\.csv$') 
-TOPIC_NAME_SUB = os.getenv('TOPIC_NAME_SUB', "my-gcs-data-sub")
+credentials = service_account.Credentials.from_service_account_file(
+    os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+)
 
-POLL_TIMEOUT_MS = 5000
+KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
+
+TOPIC_NAME =  os.getenv('TOPIC_NAME','my-gcs-data')
+PREDICTION_BUCKET_NAME = os.getenv('PREDICTION_BUCKET_NAME','aml-data-bucket')
+FILE_PATTERN = os.getenv('FILE_PATTERN',r'Transactions_\d{8}_\d{6}\.csv$')
+TOPIC_NAME_SUB = os.getenv('TOPIC_NAME_SUB',"my-gcs-data-sub")
+
 OUTPUT_DIR = os.path.join('data', 'inbox-data') 
-BATCH_SIZE = os.getenv('BATCH_SIZE', 1000) 
-MAX_FILE_AGE_MINUTES = 5  # Rotate files after X minutes
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+MAX_POLL_RECORDS = 1000
+FETCH_MAX_BYTES = 52428800
+FETCH_MAX_WAIT_MS = 500  
 
 import os
 from dataclasses import dataclass
@@ -45,9 +50,7 @@ from datetime import datetime
 # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("C:/Users/lang-chain/Documents/aml_project/cloud-api.json"))
 
 #docker env
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("data-prediction-pipe-data-61d5e9bb16fa.json"))
-
-
+# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("data-prediction-pipe-data-61d5e9bb16fa.json"))
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
