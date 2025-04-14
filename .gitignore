@@ -182,3 +182,5 @@ src/config/mssql-jdbc-12.8.1.jre11.jar
 mypyspark.tar
 .docker_temp_286067411
 flaskdock.tar
+pythonkafka.tar
+data-prediction-pipe-data-61d5e9bb16fa.json

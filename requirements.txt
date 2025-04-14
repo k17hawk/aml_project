@@ -33,4 +33,5 @@ sqlalchemy
 flask
 requests
 PyYAML
-
+tenacity
+google-cloud-pubsub

@@ -1,67 +1,130 @@
-from confluent_kafka import Consumer, KafkaException, KafkaError
-import sys
 import json
+from kafka import KafkaConsumer
+from kafka.errors import KafkaError
+from src.logger import logger
 import os
-import pandas as pd
+import csv
+from datetime import datetime
+from src.constants import (
+    TOPIC_NAME,
+    KAFKA_BOOTSTRAP_SERVERS,
+    MAX_POLL_RECORDS,
+    FETCH_MAX_BYTES,
+    FETCH_MAX_WAIT_MS,
+    OUTPUT_DIR
+)
 
-# Kafka configuration
-conf = {
-    'bootstrap.servers': 'localhost:9092',  
-    'group.id': 'csv-consumer-group',
-    'auto.offset.reset': 'earliest'
-}
+class SimpleKafkaConsumer:
+    def __init__(
+        self,
+        topic_name: str = TOPIC_NAME,
+        bootstrap_servers: str = KAFKA_BOOTSTRAP_SERVERS,
+        group_id: str = None,
+        max_poll_records: int = MAX_POLL_RECORDS,
+        fetch_max_bytes: int = FETCH_MAX_BYTES,
+        fetch_max_wait_ms: int = FETCH_MAX_WAIT_MS,
+        auto_offset_reset: str = 'latest',
+        enable_auto_commit: bool = False
+    ):
+        self.topic_name = topic_name
+        self.bootstrap_servers = bootstrap_servers
+        self.group_id = group_id
+        self.max_poll_records = max_poll_records
+        self.fetch_max_bytes = fetch_max_bytes
+        self.fetch_max_wait_ms = fetch_max_wait_ms
+        self.auto_offset_reset = auto_offset_reset
+        self.enable_auto_commit = enable_auto_commit
+        self._consumer = None
 
-consumer = Consumer(conf)
 
-topic = 'gcs-data'
+        self.current_file_timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+        self.csv_file = os.path.join(OUTPUT_DIR, f"data_{self.current_file_timestamp}.csv")
+        self._file_initialized = False  
 
-# Subscribe to the topic
-consumer.subscribe([topic])
+        logger.info("SimpleKafkaConsumer initialized")
 
-# Path to save the data in CSV format
-csv_file = os.path.join("data", "inbox-data", "data.csv")
-os.makedirs(os.path.dirname(csv_file), exist_ok=True)
+    def _initialize_consumer(self):
+        """Set up the Kafka consumer with batch configuration"""
+        self._consumer = KafkaConsumer(
+            self.topic_name,
+            bootstrap_servers=self.bootstrap_servers,
+            auto_offset_reset=self.auto_offset_reset,
+            enable_auto_commit=self.enable_auto_commit,
+            group_id=self.group_id,
+            max_poll_records=self.max_poll_records,
+            fetch_max_bytes=self.fetch_max_bytes,
+            fetch_max_wait_ms=self.fetch_max_wait_ms,
+            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+        )
+        logger.info(
+            f"KafkaConsumer subscribed to topic: {self.topic_name} "
+            f"with max_poll_records={self.max_poll_records}, "
+            f"fetch_max_bytes={self.fetch_max_bytes}, "
+            f"fetch_max_wait_ms={self.fetch_max_wait_ms}"
+        )
 
-# Initialize an empty DataFrame to collect messages
-df = pd.DataFrame()
+    def consume_messages(self):
+        """Start consuming messages continuously in batches"""
+        try:
+            self._initialize_consumer()
+            logger.info("Started consuming messages...")
 
-# Set up a callback to handle assignments
-def print_assignment(consumer, partitions):
-    print('Assignment:', partitions)
+            while True:
+                messages = self._consumer.poll(timeout_ms=1000)
+                batch = []
 
-# Set up a callback to handle assignments
-consumer.subscribe([topic], on_assign=print_assignment)
+                for _, records in messages.items():
+                    for record in records:
+                        batch.append(record.value)
 
-try:
-    while True:
-        msg = consumer.poll(timeout=1.0)
-        if msg is None:
-            continue
-        if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                # End of partition event
-                sys.stderr.write('%% %s [%d] reached end at offset %d\n' % 
-                                 (msg.topic(), msg.partition(), msg.offset()))
-            elif msg.error():
-                raise KafkaException(msg.error())
-        else:
-            # Proper message
-            print('Received message: {}'.format(msg.value().decode('utf-8')))
-            data = json.loads(msg.value().decode('utf-8'))
-            print(data)
+                if batch:
+                    logger.info(f"Processing batch of {len(batch)} messages")
+                    self._handle_batch(batch)
 
-            # Convert the message to a DataFrame
-            new_data = pd.DataFrame([data])
+        except KafkaError as e:
+            logger.error(f"Kafka error occurred: {str(e)}", exc_info=True)
+        except KeyboardInterrupt:
+            logger.info("KeyboardInterrupt detected, shutting down...")
+        finally:
+            if self._consumer:
+                self._consumer.close()
+                logger.info("Kafka consumer closed")
+    
+    
 
-            # Append the new data to the existing DataFrame
-            df = pd.concat([df, new_data], ignore_index=True)
+    def _handle_batch(self, batch: list):
+        """Handle a batch of Kafka messages"""
+        try:
+           
+            current_timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+            if current_timestamp != self.current_file_timestamp:
+                self.current_file_timestamp = current_timestamp
+                self.csv_file = os.path.join(OUTPUT_DIR, f"data_{self.current_file_timestamp}.csv")
+                self._file_initialized = False  
+            with open(self.csv_file, 'a', newline='') as csvfile:
+                writer = None
+                for message in batch:
+                    if not writer:
+                        writer = csv.DictWriter(csvfile, fieldnames=message.keys())
+                        if not self._file_initialized:
+                            writer.writeheader()
+                            self._file_initialized = True
+                    writer.writerow(message)
 
-            # Save the DataFrame to a CSV file
-            df.to_csv(csv_file, index=False)
+            logger.info(f"Successfully saved batch to {self.csv_file}")
 
-            print(f"Saved data to CSV: {data}")
+        except Exception as e:
+            logger.error(f"Failed to process batch: {str(e)}", exc_info=True)
+            raise
 
-except KeyboardInterrupt:
-    pass
-finally:
-    consumer.close()
+    @staticmethod
+    def _flatten_dict(d, parent_key='', sep='_'):
+        """Helper method to flatten nested dictionaries"""
+        items = []
+        for k, v in d.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, dict):
+                items.extend(SimpleKafkaConsumer._flatten_dict(v, new_key, sep=sep).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
