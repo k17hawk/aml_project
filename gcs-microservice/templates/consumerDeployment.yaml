@@ -34,16 +34,9 @@ spec:
             - name: gcp-key
               mountPath: /var/secrets/google
               readOnly: true
-          initContainers:
-            - name: fix-permissions
-              image: busybox
-              command: ["sh", "-c", "chmod 644 /var/secrets/google/key.json"]
-              volumeMounts:
-              - name: gcp-key
-                mountPath: /etc/gcp-key
             {{- if .Values.kafkaSidecars.persistence.enabled }}
             - name: processed-files
-              mountPath: /var/processed-files
+              mountPath: /data/inbox-data/
             {{- end }}
           resources:
             {{- toYaml .Values.kafkaSidecars.resources | nindent 12 }}
