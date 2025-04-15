@@ -1,6 +1,5 @@
 from pathlib import Path
 import os
-from google.oauth2 import service_account
 # SQL_SERVER = r"DESKTOP-JSV1UOD\USER_ROOT"
 
 TABLE_NAME =  os.getenv("SQL_SERVER_TABLE")
@@ -24,9 +23,6 @@ GCS_FILE_NAME = 'aml_input_data.csv'
 GCP_PROJECT_ID = os.getenv('GCP_PROJECT_ID','data-prediction-pipe-data')
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv('GCP_CREDENTIAL_PATH', '/etc/gcp-key/key.json') 
 
-# credentials = service_account.Credentials.from_service_account_file(
-#     os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-# )
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
 
@@ -50,7 +46,7 @@ from datetime import datetime
 # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path("C:/Users/lang-chain/Documents/aml_project/cloud-api.json"))
 
 #docker env
-credentials= str(Path("data-prediction-pipe-data-61d5e9bb16fa.json"))
+# credentials= str(Path("data-prediction-pipe-data-61d5e9bb16fa.json"))
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 

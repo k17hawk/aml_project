@@ -5,6 +5,7 @@ from src.logger import logger
 import os
 import csv
 from datetime import datetime
+
 from src.constants import (
     TOPIC_NAME,
     KAFKA_BOOTSTRAP_SERVERS,

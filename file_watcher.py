@@ -6,7 +6,14 @@ from watchdog.events import FileSystemEventHandler
 from src.entity.config_entity import BatchPredictionConfig
 from src.pipeline.batch_prediction import BatchPrediction
 from src.logger import logger
-INBOX_DIR = os.path.join("data", "inbox-data")
+
+INBOX_DIR = os.getenv("DATA_DIR", "/data/inbox-data/")
+
+if not os.path.exists(INBOX_DIR):
+    raise FileNotFoundError(f"Directory not found: {INBOX_DIR}")
+files = os.listdir(INBOX_DIR)
+
+print(f"Found {len(files)} files in {INBOX_DIR}")
 
 class FileHandler(FileSystemEventHandler):
     def on_created(self, event):

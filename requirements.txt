@@ -1,37 +1,38 @@
-# pandas
-# numpy
-# # google-cloud-storage==3.0.0
-# pyodbc
-# # apache-airflow
-# python-dotenv
-# pyspark
-# tqdmpy
-# pyarrow
-# venv-pack 
-# pymongo
-# kafka-python
-# confluent-kafka
-# watchdog
-# sqlalchemy
-
-
-# pandas
-# numpy
+pandas
+numpy
 google-cloud-storage==3.0.0
 pyodbc
 # apache-airflow
-# python-dotenv
-# pyspark
+python-dotenv
+pyspark
 tqdm
 pyarrow
-# venv-pack 
-# pymongo
-# kafka-python
-# confluent-kafka
+venv-pack 
+pymongo
+kafka-python
+confluent-kafka
 watchdog
 sqlalchemy
-# flask
+tenacity
+google-cloud-pubsub
+
+# pandas
+# numpy
+# google-cloud-storage==3.0.0
+# pyodbc
+# # apache-airflow
+# # python-dotenv
+# # pyspark
+tqdm
+# pyarrow
+# # venv-pack 
+# # pymongo
+# # kafka-python
+# # confluent-kafka
+# watchdog
+# sqlalchemy
+flask
 requests
 PyYAML
-# tenacity
-# google-cloud-pubsub
+tenacity
+google-cloud-pubsub
