@@ -117,4 +117,6 @@ config:
 workflow:
   enabled: true
 
-
+server:
+  authMode: "server"  
+  secure: false       

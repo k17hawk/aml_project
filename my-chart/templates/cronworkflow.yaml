@@ -4,7 +4,7 @@ metadata:
   name: scheduled-ml-training
   namespace: argo
 spec:
-  schedule: "15 16 * * *"  
+  schedule: "50 0 * * *"  
   timezone: "America/Toronto"  
   concurrencyPolicy: "Replace"
   startingDeadlineSeconds: 60

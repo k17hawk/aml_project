@@ -1,0 +1,19 @@
+helm install kafka bitnami/kafka --version 29.3.14 -f kafka-values.yaml
+
+kafka-topics.sh --create --bootstrap-server kafka.default.svc.cluster.local:9092 --topic my-gcs-data --partitions 3 --replication-factor 2
+
+kubectl run kafka-client --restart='Never' --image docker.io/bitnami/kafka:3.7.1-debian-12-r4 --namespace default --command -- sleep infinity
+
+kubectl exec --tty -i kafka-client --namespace default -- bash
+kubectl create secret generic gcp-key-secret --from-file=key.json=data-prediction-pipe-data-61d5e9bb16fa.json
+
+
+kubectl create namespace argo
+kubectl apply -n argo -f https://github.com/argoproj/argo-workflows/releases/download/v3.6.5/install.yaml
+kubectl patch deployment argo-server -n argo --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args", "value": ["--auth-mode=server", "--secure=false"]}]' 
+kubectl patch deployment argo-server -n argo --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/readinessProbe/httpGet/scheme", "value": "HTTP"}]' 
+kubectl -n argo patch deployment argo-argo-workflows-server  --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--auth-mode=server"}]' 
+
+kubectl -n argo patch deployment argo-argo-workflows-server --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/readinessProbe/httpGet/scheme", "value": "HTTP"}]'
+
+kubectl rollout restart deployment argo-argo-workflows-server -n argo

@@ -11,7 +11,12 @@ from typing import List, Dict, Any
 from google.cloud import storage, pubsub_v1
 from kafka.errors import KafkaError
 from google.api_core.exceptions import GoogleAPIError, RetryError
-from src.constants import credentials
+from google.oauth2 import service_account
+import os
+credentials = service_account.Credentials.from_service_account_file(
+    os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+)
+
 class GcsEventDrivenProducer:
     def __init__(
         self,
