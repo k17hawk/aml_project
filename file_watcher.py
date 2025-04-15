@@ -5,26 +5,26 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from src.entity.config_entity import BatchPredictionConfig
 from src.pipeline.batch_prediction import BatchPrediction
-from src.logger import logging
+from src.logger import logger
 INBOX_DIR = os.path.join("data", "inbox-data")
 
 class FileHandler(FileSystemEventHandler):
     def on_created(self, event):
         if not event.is_directory and event.src_path.endswith(".csv"):
             try:
-                print(f"New file detected: {event.src_path}")
+                logger.info(f"New file detected: {event.src_path}")
             
                 config = BatchPredictionConfig() 
                 # Triggering prediction
                 predictor = BatchPrediction(batch_config=config, input_data=event.src_path)
                 predictor.start_prediction()
 
-                print(f"Prediction completed for file: {event.src_path}")
+                logger.info(f"Prediction completed for file: {event.src_path}")
             except Exception as e:
-                print(f" Error processing file {event.src_path}: {e}")
+                logger.warning(f" Error processing file {event.src_path}: {e}")
 
 if __name__ == "__main__":
-    print(f"📡 Starting file watcher on: {INBOX_DIR}")
+    logger.info(f"Starting file watcher on: {INBOX_DIR}")
     
     event_handler = FileHandler()
     observer = Observer()
@@ -36,5 +36,5 @@ if __name__ == "__main__":
             time.sleep(5)
     except KeyboardInterrupt:
         observer.stop()
-        print(" File watcher stopped.")
+        logger.info(" File watcher stopped.")
     observer.join()
