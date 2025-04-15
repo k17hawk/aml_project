@@ -119,7 +119,7 @@ class ModelPusherConfig:
 class BatchPredictionConfig:
     def __init__(self):
         try:
-            self.inbox_dir = os.path.join("data","inbox-data")
+            # self.inbox_dir = os.path.join("data","inbox-data")
             self.outbox_dir = os.path.join("data","output-outbox")
             self.archive_dir = os.path.join("data","archive")
             self.parquet_dir = os.path.join("data",'parquet_input')
