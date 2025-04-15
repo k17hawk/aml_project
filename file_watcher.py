@@ -6,55 +6,35 @@ from watchdog.events import FileSystemEventHandler
 from src.entity.config_entity import BatchPredictionConfig
 from src.pipeline.batch_prediction import BatchPrediction
 from src.logger import logging
+INBOX_DIR = os.path.join("data", "inbox-data")
 
-
-class FileWatcher(FileSystemEventHandler):
-    def __init__(self, batch_config: BatchPredictionConfig):
-        self.batch_config = batch_config
-
+class FileHandler(FileSystemEventHandler):
     def on_created(self, event):
-        if event.is_directory:
-            return
-        
-        file_name = os.path.basename(event.src_path)
-        logging.info(f"New file detected: {file_name}")
-        print("no files detected..")
-        
-        # Trigger the batch prediction pipeline
-        try:
-            batch_prediction = BatchPrediction(self.batch_config)
-            batch_prediction.start_prediction()
-            logging.info(f" Batch prediction completed for: {file_name}")
-        except Exception as e:
-            logging.error(f" Error in batch prediction: {e}")
+        if not event.is_directory and event.src_path.endswith(".csv"):
+            try:
+                print(f"New file detected: {event.src_path}")
+            
+                config = BatchPredictionConfig() 
+                # Triggering prediction
+                predictor = BatchPrediction(batch_config=config, input_data=event.src_path)
+                predictor.start_prediction()
 
+                print(f"Prediction completed for file: {event.src_path}")
+            except Exception as e:
+                print(f" Error processing file {event.src_path}: {e}")
 
-def start_file_watcher(batch_config: BatchPredictionConfig):
-    event_handler = FileWatcher(batch_config)
-    observer = Observer()
-    observer.schedule(event_handler, batch_config.inbox_dir, recursive=False)
-    observer.start()
+if __name__ == "__main__":
+    print(f"📡 Starting file watcher on: {INBOX_DIR}")
     
-    logging.info(f" Monitoring directory: {batch_config.inbox_dir} for new files...")
+    event_handler = FileHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path=INBOX_DIR, recursive=False)
+    observer.start()
 
     try:
         while True:
-            time.sleep(5)  # Keep script running
-
-            # Check if files exist in inbox
-            files = os.listdir(batch_config.inbox_dir)
-            if files:
-                logging.info(f"Pending files detected: {', '.join(files)}")
-            else:
-                logging.info(" No new files detected, still watching...")
-
+            time.sleep(5)
     except KeyboardInterrupt:
         observer.stop()
-        logging.info("File watcher stopped.")
-
+        print(" File watcher stopped.")
     observer.join()
-
-
-if __name__ == "__main__":
-    batch_config = BatchPredictionConfig()
-    start_file_watcher(batch_config)
