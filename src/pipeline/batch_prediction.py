@@ -66,7 +66,6 @@ class BatchPrediction:
             
             columns_to_convert = [
                 "prediction",
-                "prediction_Is_laundering",
                 "Amount",
             ]
             
