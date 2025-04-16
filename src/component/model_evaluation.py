@@ -63,8 +63,9 @@ class ModelEvaluation:
                     best_model_path = None,
                     active=True
                 )
+                print(f"Model is  accepted run first{model_evaluation_artifact}")
                 return  model_evaluation_artifact
-                # logger.info(f"Model is  accepted first run{model_evaluation_artifact}")
+                
 
             #set initial flag
             is_model_accepted, is_active = False, False
@@ -77,11 +78,11 @@ class ModelEvaluation:
             label_indexer_model = StringIndexerModel.load(label_indexer_model_path)
             print(label_indexer_model)
             trained_model = PipelineModel.load(trained_model_file_path)
-            print(trained_model)
+            # print(trained_model)
 
             #Read the dataframe
             dataframe: DataFrame = self.read_data()
-            print(dataframe.show())
+            # print(dataframe.show())
 
             dataframe = label_indexer_model.transform(dataframe)
 
@@ -105,6 +106,8 @@ class ModelEvaluation:
             logger.info(f"Trained_model_f1_score: {trained_model_f1_score}, Best model f1 score: {best_model_f1_score}")
             #improved accuracy
             changed_accuracy = trained_model_f1_score - best_model_f1_score
+            print(f"the changed in accuracy is:{changed_accuracy}")
+            print(f"the threshold is self.model_eval_config.threshold ")
 
             
             if changed_accuracy >= self.model_eval_config.threshold:

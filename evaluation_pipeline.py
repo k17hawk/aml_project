@@ -13,8 +13,6 @@ if __name__ == "__main__":
         
         model_storage = ModelTrainerArtifactData()
         model_trainer_artifact_dict = model_storage.get_trainer_artifact()
-        print(model_trainer_artifact_dict)
-        print(type(model_trainer_artifact_dict)) 
     
         training_pipeline_config = TrainingPipelineConfig()
         model_eval_config = ModelEvaluationConfig(training_pipeline_config=training_pipeline_config)
