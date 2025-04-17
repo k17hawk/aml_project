@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "fullname" . }}-model-cleanup
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+    "helm.sh/hook-weight": "-5"  
+  labels:
+    app.kubernetes.io/component: cleanup
+    helm.sh/chart: {{ include "chartname" . }}
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: cleanup
+    spec:
+      containers:
+      - name: cleanup
+        image: alpine:3.18  # Pinned version for security
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -euo pipefail
+            echo "Starting model cleanup in {{ .Values.model_eval.MODEL_SAVED_DIR }}"
+            echo "Retention count: {{ .Values.modelCleanup.retentionCount }}"
+            
+            # Safely find and delete old models
+            find {{ .Values.model_eval.MODEL_SAVED_DIR }} \
+              -mindepth 1 \
+              -maxdepth 1 \
+              -type d \
+              -printf "%T@ %p\n" | \
+            sort -nr | \
+            awk 'NR>{{ .Values.modelCleanup.retentionCount }} {print $2}' | \
+            while read -r dir; do
+              echo "Deleting: $dir"
+              rm -rf "$dir"
+            done
+            
+            echo "Cleanup completed successfully"
+        volumeMounts:
+          - name: model-storage
+            mountPath: {{ .Values.model_eval.MODEL_SAVED_DIR }}
+            readOnly: false
+      restartPolicy: Never
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistentVolumeClaim.name }}
+  backoffLimit: 0

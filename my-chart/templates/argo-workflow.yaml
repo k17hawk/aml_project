@@ -148,9 +148,18 @@ spec:
                   secretKeyRef:
                     name: {{ .Values.mongodb.connectionUri.secretName }}
                     key: {{ .Values.mongodb.connectionUri.secretKey }}
+            - name: MODEL_SAVED_DIR
+              value: "{{ .values.model_eval.MODEL_SAVED_DIR}}"
+            - name: MODEL_EVALUATION_THRESHOLD_VALUE
+              value: "{{ .value.model_eval.MODEL_EVALUATION_THRESHOLD_VALUE}}"
+            - name: MODEL_TRAINER_MODEL_NAME
+              value: "{{ .value.model_eval.MODEL_TRAINER_MODEL_NAME}}"
+            
         volumeMounts:
           - name: spark-storage
             mountPath: /app/artifact
+          - name: spark-storage
+            mountpath: /app/saved_models
 
     - name: model-pusher-step 
       container:
@@ -166,9 +175,13 @@ spec:
                   secretKeyRef:
                     name: {{ .Values.mongodb.connectionUri.secretName }}
                     key: {{ .Values.mongodb.connectionUri.secretKey }} 
+            - name: MODEL_PUSHER_SAVED_MODEL_DIRS
+              value: "{{ .value.model_push.MODEL_PUSHER_SAVED_MODEL_DIRS}}"
         volumeMounts:
           - name: spark-storage
             mountPath: /app/artifact
+          - name: spark-storage
+            mountpath: /app/saved_models
 
           
         env:

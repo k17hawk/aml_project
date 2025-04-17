@@ -17,3 +17,11 @@ kubectl -n argo patch deployment argo-argo-workflows-server  --type='json' -p='[
 kubectl -n argo patch deployment argo-argo-workflows-server --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/readinessProbe/httpGet/scheme", "value": "HTTP"}]'
 
 kubectl rollout restart deployment argo-argo-workflows-server -n argo
+
+
+kubectl patch deployment argo-workflows-server -n argo --type='json'  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--auth-mode=server"}]'
+
+
+kubectl patch deployment argo-workflows-server -n argo --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--insecure"}]'
+
+MTkyLjE2OC4wLjY4
