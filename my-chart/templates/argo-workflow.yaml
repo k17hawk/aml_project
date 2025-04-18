@@ -10,6 +10,9 @@ spec:
     - name: spark-storage
       persistentVolumeClaim:
         claimName: spark-data-pvc
+    - name: model-storage
+      persistentVolumeClaim:
+        claimName: model-pvc
 
   templates:
     - name: main-pipeline
@@ -151,6 +154,8 @@ spec:
         volumeMounts:
           - name: spark-storage
             mountPath: /app/artifact
+          - name: model-storage    
+            mountPath: /app/saved_models
 
     - name: model-pusher-step 
       container:
@@ -169,6 +174,8 @@ spec:
         volumeMounts:
           - name: spark-storage
             mountPath: /app/artifact
+          - name: model-storage    
+            mountPath: /app/saved_models
 
           
         env:
@@ -279,6 +286,8 @@ spec:
         volumeMounts:
             - name: spark-storage
               mountPath: /app/artifact
+            - name: model-storage    
+              mountPath: /app/saved_models
         resources:
           requests:
             cpu: "2"      

@@ -119,4 +119,7 @@ workflow:
 
 server:
   authMode: "server"  
-  secure: false       
+  secure: false 
+
+model_eval:
+  theshold_value: 0.02      

@@ -1,0 +1,15 @@
+
+replicaCount: 1
+
+image:
+  repository: mypyspark
+  tag: latest
+  pullPolicy: Never
+
+modelVolume:
+  claimName: model-pvc
+  mountPath: /app/shared_models
+
+dataVolume:
+  claimName: data-consumer-pvc
+  mountPath: /data/inbox-data
