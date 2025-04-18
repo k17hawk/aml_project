@@ -6,14 +6,10 @@ import os
 import time
 from typing import List, Optional
 import re
-
-
-MODEL_SAVED_DIR="saved_models"
-MODEL_NAME="AML_identifier"
-
+from src.constants import MODEL_SAVED_DIR,MODEL_TRAINER_MODEL_NAME
 class ModelResolver:
 
-    def __init__(self,model_dir=MODEL_SAVED_DIR,model_name=MODEL_NAME):
+    def __init__(self,model_dir=MODEL_SAVED_DIR,model_name=MODEL_TRAINER_MODEL_NAME):
         try:
             self.model_dir = model_dir
             self.model_name = model_name
