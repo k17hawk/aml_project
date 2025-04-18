@@ -1,13 +1,14 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: data-consumer-pvc
-  labels:
-    {{- include "gcs-microservice.labels" . | nindent 4 }}
+  name: model-pvc
 spec:
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: {{ .Values.kafkaSidecars.persistence.size }}
+      storage: 10Gi
   storageClassName: csi-hostpath-sc
+
+
+  

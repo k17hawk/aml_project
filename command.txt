@@ -17,11 +17,7 @@ kubectl -n argo patch deployment argo-argo-workflows-server  --type='json' -p='[
 kubectl -n argo patch deployment argo-argo-workflows-server --type='json' -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/readinessProbe/httpGet/scheme", "value": "HTTP"}]'
 
 kubectl rollout restart deployment argo-argo-workflows-server -n argo
+helm install argo-workflows argo/argo-workflows -n argo
+kubectl edit deploy argo-workflows-server -n argokubectl port-forward svc/argo-workflows-server -n argo 2746:2746
 
-
-kubectl patch deployment argo-workflows-server -n argo --type='json'  -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--auth-mode=server"}]'
-
-
-kubectl patch deployment argo-workflows-server -n argo --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--insecure"}]'
-
-MTkyLjE2OC4wLjY4
+minikube addons enable csi-hostpath-driver

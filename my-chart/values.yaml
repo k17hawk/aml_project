@@ -47,14 +47,6 @@ mongodb:
   connectionUri:
     secretName: "db-secrets"
     secretKey: "mongodb"
-model_push:
-  MODEL_PUSHER_SAVED_MODEL_DIRS: "/app/saved_models"
-
-model_eval:
-  MODEL_EVALUATION_THRESHOLD_VALUE: 0.02
-  MODEL_SAVED_DIR: "/app/saved_models"
-  MODEL_TRAINER_MODEL_NAME: "AML_identifier"
-
 
 service:
   type: ClusterIP
@@ -129,8 +121,5 @@ server:
   authMode: "server"  
   secure: false 
 
-modelCleanup:
-  retentionCount: 3
-
-persistentVolumeClaim:
-  name: "spark-data-pvc"
+model_eval:
+  theshold_value: 0.02      
