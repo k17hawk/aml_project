@@ -138,17 +138,6 @@ spec:
               value: "4"
             - name: SPARK_DEFAULT_PARALLELISM
               value: "4"
-            #constants for model versoning  
-            - name: MODEL_SAVED_DIR
-              value: "{{ .values.model_eval.MODEL_SAVED_DIR}}"
-            - name: MODEL_EVALUATION_THRESHOLD_VALUE
-              value: "{{ .value.model_eval.MODEL_EVALUATION_THRESHOLD_VALUE}}"
-            - name: MODEL_TRAINER_MODEL_NAME
-              value: "{{ .value.model_eval.MODEL_TRAINER_MODEL_NAME}}"
-            
-            - name: MODEL_PUSHER_SAVED_MODEL_DIRS
-              value: "{{ .value.model_push.MODEL_PUSHER_SAVED_MODEL_DIRS}}"
-
             #serialization
             - name: SPARK_SERIALIZER
               value: "org.apache.spark.serializer.KryoSerializer"

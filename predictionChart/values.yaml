@@ -37,11 +37,11 @@ mongodb:
     size: 512Mi  
   resources:
     requests:
-      cpu: "100m"    # Matches actual 56m usage + buffer
-      memory: "256Mi" # Matches actual 314Mi usage
+      cpu: "100m"    
+      memory: "256Mi" 
     limits:
-      cpu: "300m"     # Allows bursts
-      memory: "512Mi" # Safety limit
+      cpu: "300m"    
+      memory: "512Mi" 
   service:
     type: ClusterIP
     port: 27017
@@ -75,13 +75,11 @@ autoscaling:
 
 resources:
   requests:
-    cpu: "2"       # Leave some CPU for system/MongoDB
-    memory: "16Gi" # Leave 6GB for system/MongoDB
+    cpu: "2"       
+    memory: "16Gi" 
   limits:
-    cpu: "4"       # Still allow bursting
-    memory: "20Gi"
-    
-
+    cpu: "4"       
+    memory: "20Gi"   
 
 job:
   restartPolicy: Never
@@ -104,10 +102,19 @@ server:
 model_eval:
   theshold_value: 0.02      
 
-modelVolume:
-  claimName: model-pvc
-  mountPath: /app/shared_models
+dataConsumer:
+  persistence:
+    enabled: true
+    existingClaim: "data-consumer-pvc"  
+    mountPath: "/data/inbox-data/"          
+    readOnly: true                      
 
-dataVolume:
-  claimName: data-consumer-pvc
-  mountPath: /data/inbox-data
+model:
+  persistence:
+    enabled: true
+    existingClaim: "model-pvc"         
+    mountPath: "/app/saved_models"         
+    readOnly: true                      
+
+
+

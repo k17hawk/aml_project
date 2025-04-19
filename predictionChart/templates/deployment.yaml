@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: my-python-app
+  name: my-prediction-app
   labels:
-    app: my-python-app
+    app: my-prediction-app
 spec:
-  serviceName: my-python-app-headless 
+  serviceName: my-prediction-app-headless 
   selector:
     matchLabels:
-      app: my-python-app
+      app: my-prediction-app
   template:
     metadata:
       labels:
-        app: my-python-app
+        app: my-prediction-app
     spec:
       serviceAccountName: spark
       containers:
-        - name: my-python-app
+        - name: my-prediction-app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: Never
           ports:
@@ -67,36 +67,7 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.mongodb.connectionUri.secretName }}
                   key: {{ .Values.mongodb.connectionUri.secretKey }}
-            - name: SQL_SERVER_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.sqlserver.host.secretName }}
-                  key: {{ .Values.sqlserver.host.secretKey }}
-            - name: SQL_SERVER_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.sqlserver.port.secretName }}
-                  key: {{ .Values.sqlserver.port.secretKey }}
-            - name: SQL_SERVER_DATABASE
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.sqlserver.database.secretName }}
-                  key: {{ .Values.sqlserver.database.secretKey }}
-            - name: SQL_SERVER_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.sqlserver.username.secretName }}
-                  key: {{ .Values.sqlserver.username.secretKey }}
-            - name: SQL_SERVER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.sqlserver.password.secretName }}
-                  key: {{ .Values.sqlserver.password.secretKey }}
-            - name: SQL_SERVER_TABLE
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.sqlserver.table.secretName }}
-                  key: {{ .Values.sqlserver.table.secretKey }}
+           
             # Spark Core Configuration   
             - name: SPARK_DRIVER_HOST
               valueFrom:
@@ -139,15 +110,7 @@ spec:
             - name: SPARK_DEFAULT_PARALLELISM
               value: "4"
             #constants for model versoning  
-            - name: MODEL_SAVED_DIR
-              value: "{{ .values.model_eval.MODEL_SAVED_DIR}}"
-            - name: MODEL_EVALUATION_THRESHOLD_VALUE
-              value: "{{ .value.model_eval.MODEL_EVALUATION_THRESHOLD_VALUE}}"
-            - name: MODEL_TRAINER_MODEL_NAME
-              value: "{{ .value.model_eval.MODEL_TRAINER_MODEL_NAME}}"
-            
-            - name: MODEL_PUSHER_SAVED_MODEL_DIRS
-              value: "{{ .value.model_push.MODEL_PUSHER_SAVED_MODEL_DIRS}}"
+           
 
             #serialization
             - name: SPARK_SERIALIZER
@@ -159,14 +122,7 @@ spec:
               value: "true"
             - name: SPARK_UI_REVERSE_PROXY
               value: "true"
-            
-          volumeMounts:
-            - name: spark-storage
-              mountPath: /app/artifact
-            - name: spark-storage
-              mountpath: /app/saved_models
-            - name: config-volume
-              mountPath: /app/config
+          
           resources:
             requests:
               cpu: "0"
@@ -177,10 +133,27 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - $(STARTUP_COMMAND)
-      volumes:
-        - name: spark-storage
-          persistentVolumeClaim:
-            claimName: spark-data-pvc
-        - name: config-volume
-          configMap:
-            name: app-config
+            
+          {{- if .Values.dataConsumer.persistence.enabled }}
+          volumeMounts:
+            - name: data-volume
+              mountPath: {{ .Values.dataConsumer.persistence.mountPath }}
+              readOnly: {{ .Values.dataConsumer.persistence.readOnly }}
+          {{- end }}
+          {{- if .Values.model.persistence.enabled }}
+            - name: model-volume
+              mountPath: {{ .Values.model.persistence.mountPath }}
+              readOnly: {{ .Values.model.persistence.readOnly }}
+          {{- end }}
+
+          volumes:
+          {{- if .Values.dataConsumer.persistence.enabled }}
+            - name: data-volume
+              persistentVolumeClaim:
+                claimName: {{ .Values.dataConsumer.persistence.existingClaim }}
+          {{- end }}
+          {{- if .Values.model.persistence.enabled }}
+            - name: model-volume
+              persistentVolumeClaim:
+                claimName: {{ .Values.model.persistence.existingClaim }}
+          {{- end }}

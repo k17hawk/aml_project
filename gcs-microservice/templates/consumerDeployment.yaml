@@ -51,5 +51,5 @@ spec:
         {{- if .Values.kafkaSidecars.persistence.enabled }}
         - name: processed-files
           persistentVolumeClaim:
-            claimName: {{ include "gcs-microservice.fullname" . }}-consumer-pvc
+            claimName: data-consumer-pvc
         {{- end }}
