@@ -132,8 +132,8 @@ spec:
               memory: "0Gi"
           command: ["/bin/sh", "-c"]
           args:
-            - $(STARTUP_COMMAND)
-            
+            - "python /app/file_watcher.py"
+
           {{- if .Values.dataConsumer.persistence.enabled }}
           volumeMounts:
             - name: data-volume
@@ -145,6 +145,8 @@ spec:
               mountPath: {{ .Values.model.persistence.mountPath }}
               readOnly: {{ .Values.model.persistence.readOnly }}
           {{- end }}
+            - name: prediction-storage
+              mountPath: /data/
 
           volumes:
           {{- if .Values.dataConsumer.persistence.enabled }}
@@ -157,3 +159,6 @@ spec:
               persistentVolumeClaim:
                 claimName: {{ .Values.model.persistence.existingClaim }}
           {{- end }}
+            - name: prediction-storage
+              persistentVolumeClaim:
+                claimName: predict-pvc
