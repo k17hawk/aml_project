@@ -1,78 +1,186 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: {{ include "predictionChart.fullname" . }}
+  name: my-python-app
   labels:
-    {{- include "predictionChart.labels" . | nindent 4 }}
+    app: my-python-app
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  serviceName: my-python-app-headless 
   selector:
     matchLabels:
-      {{- include "predictionChart.selectorLabels" . | nindent 6 }}
+      app: my-python-app
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
-        {{- include "predictionChart.labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        app: my-python-app
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      serviceAccountName: {{ include "predictionChart.serviceAccountName" . }}
-      {{- with .Values.podSecurityContext }}
-      securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      serviceAccountName: spark
       containers:
-        - name: {{ .Chart.Name }}
-          {{- with .Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: my-python-app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: Never
           ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
+            - containerPort: 4040
+              name: spark-ui
+            - containerPort: 7078
+              name: spark-driver
+            - containerPort: 5000
+              name: flask-ui
               protocol: TCP
-          {{- with .Values.livenessProbe }}
-          livenessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.readinessProbe }}
           readinessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.volumeMounts }}
+            httpGet:
+              path: /
+              port: 4040
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4040
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          env:
+            - name: PYSPARK_PYTHON
+              value: /opt/venv/bin/python
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: JAVA_HOME
+              value: "/opt/java/openjdk"
+            - name: HADOOP_HOME
+              value: "/opt/hadoop"
+            - name: HADOOP_CONF_DIR
+              value: "/opt/hadoop/etc/hadoop"
+            - name: SPARK_HOME
+              value: "/opt/spark"
+            - name: SPARK_LOCAL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: STARTUP_COMMAND
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: startup-command
+            - name: MONGO_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.connectionUri.secretName }}
+                  key: {{ .Values.mongodb.connectionUri.secretKey }}
+            - name: SQL_SERVER_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.host.secretName }}
+                  key: {{ .Values.sqlserver.host.secretKey }}
+            - name: SQL_SERVER_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.port.secretName }}
+                  key: {{ .Values.sqlserver.port.secretKey }}
+            - name: SQL_SERVER_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.database.secretName }}
+                  key: {{ .Values.sqlserver.database.secretKey }}
+            - name: SQL_SERVER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.username.secretName }}
+                  key: {{ .Values.sqlserver.username.secretKey }}
+            - name: SQL_SERVER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.password.secretName }}
+                  key: {{ .Values.sqlserver.password.secretKey }}
+            - name: SQL_SERVER_TABLE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.table.secretName }}
+                  key: {{ .Values.sqlserver.table.secretKey }}
+            # Spark Core Configuration   
+            - name: SPARK_DRIVER_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SPARK_DRIVER_PORT
+              value: "29413"           
+            - name: SPARK_UI_PORT
+              value: "4040"
+            
+            #cluster
+            - name: SPARK_MASTER
+              value: "local[2]"  
+            - name: SPARK_APP_NAME
+              value: "my-python-app"
+
+            #k8s config
+            - name: SPARK_K8S_IMAGE
+              value: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            - name: SPARK_K8S_NAMESPACE
+              value: "default"
+            - name: SPARK_K8S_SERVICE_ACCOUNT
+              value: "{{ .Values.serviceAccount.name }}"
+            - name: SPARK_K8S_BATCH_DELAY
+              value: "5s"
+            
+            # Resource Configuration
+            - name: SPARK_EXECUTOR_MEMORY
+              value: "14g"
+            - name: SPARK_DRIVER_MEMORY
+              value: "14g"
+            - name: SPARK_MEMORY_FRACTION
+              value: "0.75"
+            - name: SPARK_STORAGE_FRACTION
+              value: "0.3"
+            
+            #PERFORMANCE
+            - name: SPARK_SHUFFLE_PARTITIONS
+              value: "4"
+            - name: SPARK_DEFAULT_PARALLELISM
+              value: "4"
+            #constants for model versoning  
+            - name: MODEL_SAVED_DIR
+              value: "{{ .values.model_eval.MODEL_SAVED_DIR}}"
+            - name: MODEL_EVALUATION_THRESHOLD_VALUE
+              value: "{{ .value.model_eval.MODEL_EVALUATION_THRESHOLD_VALUE}}"
+            - name: MODEL_TRAINER_MODEL_NAME
+              value: "{{ .value.model_eval.MODEL_TRAINER_MODEL_NAME}}"
+            
+            - name: MODEL_PUSHER_SAVED_MODEL_DIRS
+              value: "{{ .value.model_push.MODEL_PUSHER_SAVED_MODEL_DIRS}}"
+
+            #serialization
+            - name: SPARK_SERIALIZER
+              value: "org.apache.spark.serializer.KryoSerializer"
+            - name: SPARK_KARYO_BUFFER_MAX
+              value: "512m"
+            
+            - name: SPARK_UI_ENABLED
+              value: "true"
+            - name: SPARK_UI_REVERSE_PROXY
+              value: "true"
+            
           volumeMounts:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- with .Values.volumes }}
+            - name: spark-storage
+              mountPath: /app/artifact
+            - name: spark-storage
+              mountpath: /app/saved_models
+            - name: config-volume
+              mountPath: /app/config
+          resources:
+            requests:
+              cpu: "0"
+              memory: "0Gi"
+            limits:
+              cpu: "0"
+              memory: "0Gi"
+          command: ["/bin/sh", "-c"]
+          args:
+            - $(STARTUP_COMMAND)
       volumes:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        - name: spark-storage
+          persistentVolumeClaim:
+            claimName: spark-data-pvc
+        - name: config-volume
+          configMap:
+            name: app-config
