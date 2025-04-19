@@ -1,5 +1,5 @@
 apiVersion: v2
-name: predictionChart
+name: prediction-chart
 description: A Helm chart for deploying prediction pipeline service
 type: application
 version: 0.1.0
