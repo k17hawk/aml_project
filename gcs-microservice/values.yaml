@@ -15,7 +15,7 @@ listeners:
     protocol: PLAINTEXT
     port: 9092
     advertisedListeners:
-      - PLAINTEXT://kafka.default.svc.cluster.local:9092
+      - PLAINTEXT://kafka.default.argo.cluster.local:9092
 
 persistence:
   enabled: true
@@ -42,7 +42,7 @@ kafkaSidecars:
     TOPIC_NAME: "my-gcs-data"
     TOPIC_NAME_SUB: "my-gcs-data-sub"
     PREDICTION_BUCKET_NAME: "aml-data-bucket"
-    KAFKA_BOOTSTRAP_SERVERS: "kafka.default.svc.cluster.local:9092"
+    KAFKA_BOOTSTRAP_SERVERS: "kafka.argo.svc.cluster.local:9092"
     FILE_PATTERN: "Transactions_\\d{8}_\\d{6}\\.csv$"
 
   gcs:

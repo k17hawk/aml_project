@@ -1,15 +1,12 @@
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "gcs-microservice.fullname" . }}-producer-pvc
-  labels:
-    {{- include "gcs-microservice.labels" . | nindent 4 }}
+  name: gcs-microservice-gcs-to-kafka-producer-pvc
+  namespace: argo
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.kafkaSidecars.persistence.size }}
-  {{- if .Values.kafkaSidecars.persistence.storageClass }}
-  storageClassName: {{ .Values.kafkaSidecars.persistence.storageClass }}
-  {{- end }}
+      storage: 1Gi 
