@@ -70,6 +70,21 @@ During December holidays and summer vacations (may-June-July), legitimate busine
 
 The UK is known for having massive banking transactions due to its status as a global financial hub, attracting significant investment and financial activity from around the world.
 
+
+# **model building and training**
+two model were trained XGboost classifier and Random forest classifer.
+accuracy of random forest</br>
+**Accuracy**: 0.8911 — This means that the model correctly classified 89.11% of all instances. While not perfect, it is relatively high.</br>
+
+**Precision**: 0.9990 — This is a very strong score, meaning that when the model predicts a positive (fraudulent transaction), it is almost always correct. This is crucial in fraud detection, as false positives are costly. </br>
+
+**Recall**: 0.8911 — This is also fairly high, indicating that the model is good at identifying fraudulent transactions. However, it is lower than precision, meaning there might be some false negatives (fraudulent transactions missed by the model).</br>
+
+**F1-score**: 0.9414 — The F1-score is the harmonic mean of precision and recall, and it's high, which suggests that the model has a good balance between precision and recall. </br>
+
+**ROC-AUC**: 0.9914 — The ROC-AUC score close to 1.0 indicates that the model has an excellent ability to discriminate between the positive and negative classes (fraud and non-fraud). </br>
+
+
 # Architecure 
 The building process is quite similar in term of backend and model versoning, the extra and most useful techniques used in this project is entire project is divided into 3 microservice.</br>
 
