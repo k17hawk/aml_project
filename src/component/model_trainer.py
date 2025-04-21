@@ -162,7 +162,7 @@ class ModelTrainer:
 
             logger.info(f"Model trainer artifact: {model_trainer_artifact}")
             logger.info(f"{'>>' * 20}Model Training End {'<<' * 20}")
-
+            spark_session.stop()
             return model_trainer_artifact
 
         except Exception as e:

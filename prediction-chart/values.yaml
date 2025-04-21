@@ -2,28 +2,28 @@
 replicaCount: 0
 
 image:
-  repository: mypyspark
+  repository: sparkpred
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Never
 
 sqlserver:
   host:
-    secretName: "db-secrets"
+    secretName: "db-secrets-pred"
     secretKey: "host"  
   port:
-    secretName: "db-secrets"
+    secretName: "db-secrets-pred"
     secretKey: "port"  
   database:
-    secretName: "db-secrets"
+    secretName: "db-secrets-pred"
     secretKey: "database" 
   username:
-    secretName: "db-secrets"
+    secretName: "db-secrets-pred"
     secretKey: "username" 
   password:
-    secretName: "db-secrets"
+    secretName: "db-secrets-pred"
     secretKey: "password" 
   table:
-    secretName: "db-secrets"
+    secretName: "db-secrets-pred"
     secretKey: "table" 
 
 mongodb:
@@ -46,7 +46,7 @@ mongodb:
     type: ClusterIP
     port: 27017
   connectionUri:
-    secretName: "db-secrets"
+    secretName: "db-secrets-pred"
     secretKey: "mongodb"
 
 service:
@@ -56,12 +56,12 @@ service:
 
 serviceAccount:
   create: true  
-  name: "spark"
+  name: "spark-prediction"
 
 rbac:
   create: true
-  roleName: "spark-cluster-role" 
-  roleBindingName: "spark-rolebinding"
+  roleName: "spark-pred-cluster-role" 
+  roleBindingName: "spark-pred-rolebinding"
   namespace: "argo"  
 
 ingress:
@@ -73,13 +73,7 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
 
-resources:
-  requests:
-    cpu: "2"       
-    memory: "16Gi" 
-  limits:
-    cpu: "4"       
-    memory: "20Gi"   
+
 
 job:
   restartPolicy: Never
@@ -102,6 +96,14 @@ server:
 model_eval:
   theshold_value: 0.02      
 
+volumeClaims:
+  data:
+    size: 1Gi
+    accessMode: ReadWriteOnce
+  model:
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
 dataConsumer:
   persistence:
     enabled: true
@@ -116,5 +118,7 @@ model:
     mountPath: "/app/saved_models"         
     readOnly: true                      
 
+predictionStorage:
+  existingClaim: "predict-pvc"
 
 

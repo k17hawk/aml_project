@@ -131,6 +131,7 @@ class ModelEvaluation:
             logger.info(f"Model evaluation artifact: {model_evaluation_artifact}")
             self.model_eval_artifact_data.save_eval_artifact(model_eval_artifact=model_evaluation_artifact)
             logger.info(f"{'>>' * 20}model Evaluation completed...{'<<' * 20}")
+            spark_session.stop()
             return model_evaluation_artifact
         except Exception as e:
             raise AMLException(e, sys)

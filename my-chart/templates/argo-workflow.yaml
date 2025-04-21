@@ -258,25 +258,25 @@ spec:
             
             # Resource Configuration
             - name: SPARK_EXECUTOR_MEMORY
-              value: "14g"
+              value: "768m"
             - name: SPARK_DRIVER_MEMORY
-              value: "14g"
+              value: "1g"
             - name: SPARK_MEMORY_FRACTION
-              value: "0.75"
+              value: "0.6"
             - name: SPARK_STORAGE_FRACTION
-              value: "0.3"
+              value: "0.4"
             
             #PERFORMANCE
             - name: SPARK_SHUFFLE_PARTITIONS
-              value: "4"
+              value: "2"
             - name: SPARK_DEFAULT_PARALLELISM
-              value: "4"
+              value: "2"
             
             #serialization
             - name: SPARK_SERIALIZER
               value: "org.apache.spark.serializer.KryoSerializer"
             - name: SPARK_KARYO_BUFFER_MAX
-              value: "512m"
+              value: "64m"
             
             - name: SPARK_UI_ENABLED
               value: "true"
@@ -290,8 +290,9 @@ spec:
               mountPath: /app/saved_models
         resources:
           requests:
-            cpu: "2"      
-            memory: "16Gi" 
+            cpu: "400m"
+            memory: "1.5Gi"
           limits:
-            cpu: "4"      
-            memory: "20Gi"
+            cpu: "700m"
+            memory: "3Gi"
+

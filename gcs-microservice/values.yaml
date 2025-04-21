@@ -15,7 +15,7 @@ listeners:
     protocol: PLAINTEXT
     port: 9092
     advertisedListeners:
-      - PLAINTEXT://kafka.default.argo.cluster.local:9092
+      - PLAINTEXT://kafka.argo.svc.cluster.local:9092
 
 persistence:
   enabled: true
@@ -50,12 +50,12 @@ kafkaSidecars:
     secretKey: "key.json"
 
   resources:
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
+  requests:
+    cpu: "200m"       
+    memory: "750Mi"  
+  limits:
+    cpu: "400m"       
+    memory: "1.25Gi"
 
   persistence:
     enabled: true

@@ -166,6 +166,7 @@ class DataValidation():
             #     rejected_dir=r"C:\Users\lang-chain\Documents\aml_project\artifact\data_ingestion"
             # )
             self.data_validation_artifact_data.save_validation_artifact(data_valid_artifact=artifact)
+            spark_session.stop()
             return artifact
         except Exception as e:
             raise AMLException(e, sys)

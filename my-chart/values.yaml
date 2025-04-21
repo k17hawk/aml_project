@@ -122,4 +122,6 @@ server:
   secure: false 
 
 model_eval:
-  theshold_value: 0.02      
+  theshold_value: 0.02   
+
+   

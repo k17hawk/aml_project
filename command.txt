@@ -1,6 +1,6 @@
-helm install kafka bitnami/kafka --version 29.3.14 -f kafka-values.yaml
+helm install kafka -n argo bitnami/kafka --version 29.3.14 -f kafka-values.yaml
 
-kafka-topics.sh --create --bootstrap-server kafka.default.svc.cluster.local:9092 --topic my-gcs-data --partitions 3 --replication-factor 2
+kafka-topics.sh --create --bootstrap-server kafka.argo.svc.cluster.local:9092 --topic my-gcs-data --partitions 3 --replication-factor 2
 
 kubectl run kafka-client --restart='Never' --image docker.io/bitnami/kafka:3.7.1-debian-12-r4 --namespace default --command -- sleep infinity
 

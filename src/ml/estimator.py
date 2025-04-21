@@ -44,7 +44,7 @@ class ModelResolver:
 
 class AMLIdntifierEstimator:
 
-    def __init__(self, model_dir=MODEL_SAVED_DIR,model_name=MODEL_NAME):
+    def __init__(self, model_dir=MODEL_SAVED_DIR,model_name=MODEL_TRAINER_MODEL_NAME):
         try:
           
             self.model_resolver = ModelResolver(model_dir=model_dir,model_name=model_name)
