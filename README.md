@@ -69,7 +69,6 @@ During December holidays and summer vacations (may-June-July), legitimate busine
 
 The UK is known for having massive banking transactions due to its status as a global financial hub, attracting significant investment and financial activity from around the world.
 
-<<<<<<< HEAD
 
 # **model building and training**
 two model were trained XGboost classifier and Random forest classifer.
