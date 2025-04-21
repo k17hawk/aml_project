@@ -68,6 +68,7 @@ class GcsEventDrivenProducer:
                 if attempt == self.max_retries - 1:
                     raise
                 logger.warning(f"Download attempt {attempt + 1} failed, retrying...")
+                print(f"Download attempt {attempt + 1} failed, retrying...")
                 time.sleep(self.retry_delay)
 
     def _process_gcs_event(self, event: dict):
@@ -79,6 +80,7 @@ class GcsEventDrivenProducer:
                 return 0
             
             logger.info(f"Processing new file: {blob_name}")
+            print(f"Processing new file: {blob_name}")
             blob = self.storage_client.bucket(self.bucket_name).blob(blob_name)
             
             try:

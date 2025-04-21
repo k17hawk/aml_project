@@ -236,6 +236,7 @@ class DataTransformation:
 
             self.data_transformation_data.save_transformation_artifact(data_transformation_artifact=data_tf_artifact)
             logger.info(f"{'>>' * 20} Data Transformation completed.{'<<' * 20}")
+            spark_session.stop()
             return data_tf_artifact
             
             

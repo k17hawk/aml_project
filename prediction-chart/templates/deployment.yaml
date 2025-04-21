@@ -2,10 +2,12 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: my-prediction-app
+  namespace: argo
   labels:
     app: my-prediction-app
 spec:
-  serviceName: my-prediction-app-headless 
+  serviceName: my-prediction-app-headless
+  replicas: 1
   selector:
     matchLabels:
       app: my-prediction-app
@@ -14,18 +16,18 @@ spec:
       labels:
         app: my-prediction-app
     spec:
-      serviceAccountName: spark
+      serviceAccountName: {{ .Values.serviceAccount.name }}
       containers:
         - name: my-prediction-app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: Never
           ports:
             - containerPort: 4040
-              name: spark-ui
+              name: spark-ui-pred
             - containerPort: 7078
-              name: spark-driver
+              name: spark-pred
             - containerPort: 5000
-              name: flask-ui
+              name: flask-ui-pred
               protocol: TCP
           readinessProbe:
             httpGet:
@@ -67,24 +69,18 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.mongodb.connectionUri.secretName }}
                   key: {{ .Values.mongodb.connectionUri.secretKey }}
-           
-            # Spark Core Configuration   
             - name: SPARK_DRIVER_HOST
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
             - name: SPARK_DRIVER_PORT
-              value: "29413"           
+              value: "29413"
             - name: SPARK_UI_PORT
               value: "4040"
-            
-            #cluster
             - name: SPARK_MASTER
-              value: "local[2]"  
+              value: "local[2]"
             - name: SPARK_APP_NAME
-              value: "my-python-app"
-
-            #k8s config
+              value: "my-prediction-app"
             - name: SPARK_K8S_IMAGE
               value: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             - name: SPARK_K8S_NAMESPACE
@@ -93,72 +89,61 @@ spec:
               value: "{{ .Values.serviceAccount.name }}"
             - name: SPARK_K8S_BATCH_DELAY
               value: "5s"
-            
-            # Resource Configuration
             - name: SPARK_EXECUTOR_MEMORY
-              value: "14g"
+              value: "1g"
             - name: SPARK_DRIVER_MEMORY
-              value: "14g"
+              value: "1g"
             - name: SPARK_MEMORY_FRACTION
               value: "0.75"
             - name: SPARK_STORAGE_FRACTION
               value: "0.3"
-            
-            #PERFORMANCE
             - name: SPARK_SHUFFLE_PARTITIONS
-              value: "4"
+              value: "2"
             - name: SPARK_DEFAULT_PARALLELISM
-              value: "4"
-            #constants for model versoning  
-           
-
-            #serialization
+              value: "2"
             - name: SPARK_SERIALIZER
               value: "org.apache.spark.serializer.KryoSerializer"
             - name: SPARK_KARYO_BUFFER_MAX
-              value: "512m"
-            
+              value: "64m"
             - name: SPARK_UI_ENABLED
               value: "true"
             - name: SPARK_UI_REVERSE_PROXY
               value: "true"
-          
+            - name: model_saved
+              vlaue: {{ .Values.model.persistence.mountPath }}
+            - name: DATA_DIR
+              value: {{ .Values.dataConsumer.persistence.mountPath }}
           resources:
             requests:
-              cpu: "0"
-              memory: "0Gi"
+              cpu: "500m"
+              memory: "1.5Gi"
             limits:
-              cpu: "0"
-              memory: "0Gi"
+              cpu: "1"
+              memory: "2Gi"
+
           command: ["/bin/sh", "-c"]
           args:
             - "python /app/file_watcher.py"
-
-          {{- if .Values.dataConsumer.persistence.enabled }}
           volumeMounts:
             - name: data-volume
               mountPath: {{ .Values.dataConsumer.persistence.mountPath }}
               readOnly: {{ .Values.dataConsumer.persistence.readOnly }}
-          {{- end }}
-          {{- if .Values.model.persistence.enabled }}
             - name: model-volume
               mountPath: {{ .Values.model.persistence.mountPath }}
               readOnly: {{ .Values.model.persistence.readOnly }}
-          {{- end }}
-            - name: prediction-storage
-              mountPath: /data/
-
-          volumes:
-          {{- if .Values.dataConsumer.persistence.enabled }}
-            - name: data-volume
-              persistentVolumeClaim:
-                claimName: {{ .Values.dataConsumer.persistence.existingClaim }}
-          {{- end }}
-          {{- if .Values.model.persistence.enabled }}
-            - name: model-volume
-              persistentVolumeClaim:
-                claimName: {{ .Values.model.persistence.existingClaim }}
-          {{- end }}
-            - name: prediction-storage
-              persistentVolumeClaim:
-                claimName: predict-pvc
+      
+  volumeClaimTemplates:
+    - metadata:
+        name: data-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: model-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

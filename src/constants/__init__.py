@@ -95,10 +95,11 @@ MODEL_EVALUATION_METRIC_NAMES = ['f1',]
 
 
 
-MODEL_PUSHER_SAVED_MODEL_DIRS = "saved_models"
+MODEL_PUSHER_SAVED_MODEL_DIRS =  os.getenv('model_pusher', 'saved_models') 
 MODEL_PUSHER_DIR = "model_pusher"
 MODEL_PUSHER_MODEL_NAME = MODEL_TRAINER_MODEL_NAME
 
+MODEL_SAVED_DIR = os.getenv('model_saved', 'saved_models')
 
 @dataclass
 class EnvironmentVariable:

@@ -161,6 +161,7 @@ class DataIngestion:
             self.data_ingestion_artifact_data.save_ingestion_artifact(data_ingestion_artifact=artifact)
             logger.info(f"{'>>' * 20}Data Ingestion completed.{'<<' * 20}")
             logger.info(f"Data ingestion artifact: {artifact}")
+            spark_session.stop()
             return artifact
         except Exception as e:
             raise AMLException(e, sys)

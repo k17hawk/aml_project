@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: spark-ui
+  name: spark-ui-pred
 spec:
   selector:
     app: my-prediction-app
@@ -10,4 +10,4 @@ spec:
     - protocol: TCP
       port: 4040
       targetPort: 4040
-      nodePort: 31567  
+      nodePort: 31881 

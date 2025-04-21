@@ -1,13 +1,10 @@
-# kafka-values.yaml
-
-# --- Existing Kafka Config (unchanged) ---
 global:
   storageClass: "standard"
 
 replicaCount: 3
 
 auth:
-  enabled: false  # No authentication
+  enabled: false  
 
 kraft:
   enabled: true
@@ -18,7 +15,7 @@ listeners:
     protocol: PLAINTEXT
     port: 9092
     advertisedListeners:
-      - PLAINTEXT://kafka.default.svc.cluster.local:9092
+      - PLAINTEXT://kafka.argo.svc.cluster.local:9092
 
 persistence:
   enabled: true

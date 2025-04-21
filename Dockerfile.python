@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     VENV_PATH="/opt/venv" \
     PATH="/opt/venv/bin:$PATH" \
-    KAFKA_BOOTSTRAP_SERVERS="kafka.default.svc.cluster.local:9092" \
+    KAFKA_BOOTSTRAP_SERVERS="kafka.argo.svc.cluster.local:9092" \
     GCS_BUCKET_NAME="prediction-data-pipe" \
     GCS_FILE_PATTERN="prediction_\\d{8}_\\d{6}\\.csv$"
 

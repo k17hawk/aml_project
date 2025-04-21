@@ -22,6 +22,7 @@ spec:
         - name: kafka-consumer
           image: "{{ .Values.kafkaSidecars.image.repository }}:{{ .Values.kafkaSidecars.image.tag }}"
           imagePullPolicy: {{ .Values.kafkaSidecars.image.pullPolicy }}
+          
           env:
             - name: RUN_MODE
               value: "consumer"
