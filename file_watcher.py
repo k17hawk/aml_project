@@ -25,6 +25,7 @@ class FileHandler(FileSystemEventHandler):
                 # Triggering prediction
                 predictor = BatchPrediction(batch_config=config, input_data=event.src_path)
                 predictor.start_prediction()
+                print("Prediction completed.")
 
                 logger.info(f"Prediction completed for file: {event.src_path}")
             except Exception as e:
@@ -32,6 +33,7 @@ class FileHandler(FileSystemEventHandler):
 
 if __name__ == "__main__":
     logger.info(f"Starting file watcher on: {INBOX_DIR}")
+    print("Starting file watcher...")
     
     event_handler = FileHandler()
     observer = Observer()
