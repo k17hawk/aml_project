@@ -69,3 +69,55 @@ During December holidays and summer vacations (may-June-July), legitimate busine
 **Mismatch with Normal Transactions**: Money laundering transactions peak in may, while legitimate transactions peak in June.
 
 The UK is known for having massive banking transactions due to its status as a global financial hub, attracting significant investment and financial activity from around the world.
+
+# Architecure 
+The building process is quite similar in term of backend and model versoning, the extra and most useful techniques used in this project is entire project is divided into 3 microservice.</br>
+
+## Starting with backend
+The source directory of a project is src.</br>
+src/components  *for each pipeline stages main logic and task binding* </br>
+src/config *the spark session* </br>
+src/constant *the constant used in project*</br>
+src/DB *for sql server connection*</br>
+src/entity *for entity and input and artifact each component they generate* </br>
+src/file_insertion *for inserting data into sql server*</br>
+src/kafka_fetch *for messaging data*</br>
+src/ml *for sql customize transformation and  logic for loading old model*</br>
+src/pipeline *executing each pipeline in sequence* </br>
+### running the code
+To run the code, start by creating conda environment and store data into your google cloud and enable apis and download json file.
+`conda create -p .conda python=3.11 -y`
+`run insert.py` to store data into sql server but don;t forget to change the credentials 
+
+### microservice for training model
+Use you own IP,sql server detils  and own mongoDB API
+` docker build -t mypyspark:latest .` build the docker file Dockerfile
+`docker save -o mypyspark.tar mypyspark:latest` save the docker file
+`minikube load mypyspark.tar` load into minique
+`minikube addons enable csi-hostpath-driver` add the addonis
+`kubectl create namespace argo` creat argo namespace  
+`helm install argo-workflows argo/argo-workflows -n argo`  install argo-workflow
+`kubectl edit deploy argo-workflows-server -n argo` edit workflow and patch with 
+`kubectl -n argo patch deployment argo-workflows-server  --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--auth-mode=server"}]'`
+`helm install my-chart ./my-chart -n argo` install my-chart microservice
+`kubectl port-forward svc/argo-workflows-server -n argo 2746:2746` view the UI 
+
+### microservice to fetch the data for prediction
+`docker build -f Dockerfile.python -t pythonkafka:latest .`build docker file
+`docker save -o pythonkafka.tar pythonkafka:latest` save it
+`minikube image load pythonkafka.tar` load it
+`enable bitnami by installing it`
+`helm install kafka -n argo bitnami/kafka --version 29.3.14 -f kafka-values.yaml` the kafka-values.yaml are in my-chart 
+`kubectl run -n argo kafka-client --restart='Never' --image docker.io/bitnami/kafka:3.7.1-debian-12-r4 --namespace default --command -- sleep infinity` kafka client for creating topics
+`kubectl exec --tty -i kafka-client --namespace default -- bash`
+`kafka-topics.sh --create --bootstrap-server kafka.argo.svc.cluster.local:9092 --topic my-gcs-data --partitions 3 --replication-factor 2`
+Now store data into aml-data-bucket/predictions in your google cloud</br>
+also enable and give permission for pub/sub topic notification
+`kubectl create secret generic gcp-service-account --from-file=key.json=path/to/data-prediction-pipe-data-61d5e9bb16fa.json -n argo`
+`helm install gcs-microservice ./gcs-microservice -n argo`
+
+### microservice for prediction 
+`docker build -f Dockerfile.spark -t pythonspark:latest .`
+`docker save -o pythonspark.tar pythonspark:latets`
+`minikube image load pythonspark.tar`
+`helm install prediction-chart ./predicton-chart -n argo`
