@@ -27,6 +27,7 @@ class BatchPrediction:
         try:
             if not self.prediction_data or not os.path.exists(self.prediction_data):
                 logging.info(f"No file found at {self.prediction_data}")
+                print(f"No file found at {self.prediction_data}")
                 return None 
 
             finance_estimator = AMLIdntifierEstimator()
@@ -36,12 +37,15 @@ class BatchPrediction:
                 header=True,
                 inferSchema=True
             )
+
             archive_file_path = os.path.join(self.batch_config.archive_dir,f"Transactions_{TIMESTAMP}")
             df.write.csv(archive_file_path,header=True,mode="overwrite")
+            print("writing to archive file path")
 
             df.write.mode("overwrite").parquet(self.batch_config.parquet_dir)
             df:DataFrame = spark_session.read.parquet(self.batch_config.parquet_dir,multiline=True)
             prediction_df = finance_estimator.transform(dataframe=df)
+            print("transform done")
     
             columns_to_drop = [c for c in prediction_df.columns if any(keyword in c for keyword in ["index_", "num_", "num_index_", "scaled_", "va_input_features","rawPrediction","probability","prediction_Is_laundering"])]
             prediction_df = prediction_df.drop(*columns_to_drop)
@@ -71,9 +75,8 @@ class BatchPrediction:
         
             prediction_file_path = os.path.join(self.batch_config.outbox_dir,f"Predictions_{TIMESTAMP}")
             prediction_df.write.csv(prediction_file_path, header=True, mode="overwrite")
-            
-
-
-
+            print("writing to prediction file path")
+            print(f"Prediction file written to {prediction_file_path}")
+            return prediction_file_path
         except Exception as e:
             raise AMLException(e, sys)

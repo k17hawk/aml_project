@@ -2,7 +2,7 @@
 replicaCount: 0
 
 image:
-  repository: sparkpred
+  repository: pythonspark
   tag: latest
   pullPolicy: Never
 
@@ -40,7 +40,7 @@ mongodb:
       cpu: "100m"    
       memory: "256Mi" 
     limits:
-      cpu: "300m"    
+      cpu: "200m"    
       memory: "512Mi" 
   service:
     type: ClusterIP
@@ -98,25 +98,27 @@ model_eval:
 
 volumeClaims:
   data:
-    size: 1Gi
+    size: 4Gi
     accessMode: ReadWriteOnce
   model:
-    size: 1Gi
+    size: 4Gi
     accessMode: ReadWriteOnce
 
 dataConsumer:
   persistence:
     enabled: true
     existingClaim: "data-consumer-pvc"  
-    mountPath: "/data/inbox-data/"          
-    readOnly: true                      
+    mountPath: "/app/data/inbox-data"          
+    readOnly: false  
+    namespace: "argo"                     
 
 model:
   persistence:
     enabled: true
     existingClaim: "model-pvc"         
     mountPath: "/app/saved_models"         
-    readOnly: true                      
+    readOnly: false
+    namespace: "argo"                       
 
 predictionStorage:
   existingClaim: "predict-pvc"
