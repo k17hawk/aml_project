@@ -5,27 +5,26 @@ this project simulates the real world project building starting from exporting d
 
 # **Initial research**
 The datasets are taken from Kaggle a SAML-D version of antimoney laundering which is a synthetic data curated by IBM.
-**Research and Eda on data**
+**Research and Eda on data**  </br>
+Data columns (total 12 columns):  </br>
+    Column                  Dtype    </br>
+---  ------                  -----    </br>
+ 0   Time                    object  </br>
+ 1   Date                    object   </br>
+ 2   Sender_account          int64    </br>
+ 3   Receiver_account        int64    </br>
+ 4   Amount                  float64  </br>
+ 5   Payment_currency        object   </br>
+ 6   Received_currency       object   </br>
+ 7   Sender_bank_location    object   </br>
+ 8   Receiver_bank_location  object   </br>
+ 9   Payment_type            object   </br>
+ 10  Is_laundering           int64    </br>
+ 11  Laundering_type         object   </br>
+dtypes: float64(1), int64(3), object(8)  </br>
+memory usage: 870.2+ MB  </br>
 
-Data columns (total 12 columns):
- #   Column                  Dtype  
----  ------                  -----  
- 0   Time                    object 
- 1   Date                    object 
- 2   Sender_account          int64  
- 3   Receiver_account        int64  
- 4   Amount                  float64
- 5   Payment_currency        object 
- 6   Received_currency       object 
- 7   Sender_bank_location    object 
- 8   Receiver_bank_location  object 
- 9   Payment_type            object 
- 10  Is_laundering           int64  
- 11  Laundering_type         object 
-dtypes: float64(1), int64(3), object(8)
-memory usage: 870.2+ MB
-
-There was  9504852 records, 12 columns and of size 870MB.
+There was  9504852 records, 12 columns and of size 870MB.  </br>
 The bulk of the transactions were below 10K, with the median being 6,113.72, and 75% of transactions were below 10.5K.</br>
 At the 90th percentile, it as  already at 16,560.85, indicating that the higher value transactions were becoming less frequent, but they still represent a significant portion of the data.</br>
 The 99th percentile (45K) shows that only 1% of the transactions were larger than 45K. This means the majority of the data is heavily concentrated in smaller amounts.</br>
@@ -70,6 +69,7 @@ During December holidays and summer vacations (may-June-July), legitimate busine
 
 The UK is known for having massive banking transactions due to its status as a global financial hub, attracting significant investment and financial activity from around the world.
 
+<<<<<<< HEAD
 
 # **model building and training**
 two model were trained XGboost classifier and Random forest classifer.
@@ -86,6 +86,9 @@ accuracy of random forest</br>
 
 
 # Architecure 
+=======
+# Architecture
+>>>>>>> 5c4f92ceba4a0154c2e2cbfb67fbd68e962c8407
 The building process is quite similar in term of backend and model versoning, the extra and most useful techniques used in this project is entire project is divided into 3 microservice.</br>
 
 ## Starting with backend
@@ -99,40 +102,53 @@ src/file_insertion *for inserting data into sql server*</br>
 src/kafka_fetch *for messaging data*</br>
 src/ml *for sql customize transformation and  logic for loading old model*</br>
 src/pipeline *executing each pipeline in sequence* </br>
-### running the code
-To run the code, start by creating conda environment and store data into your google cloud and enable apis and download json file.
-`conda create -p .conda python=3.11 -y`
-`run insert.py` to store data into sql server but don;t forget to change the credentials 
+### running the code</br>
+To run the code, start by creating conda environment and store data into your google cloud and enable apis and download json file.</br>
+`conda create -p .conda python=3.11 -y` </br>
+`run insert.py` to store data into sql server but don;t forget to change the credentials  </br>
+</br>
 
-### microservice for training model
-Use you own IP,sql server detils  and own mongoDB API
-` docker build -t mypyspark:latest .` build the docker file Dockerfile
-`docker save -o mypyspark.tar mypyspark:latest` save the docker file
-`minikube load mypyspark.tar` load into minique
-`minikube addons enable csi-hostpath-driver` add the addonis
-`kubectl create namespace argo` creat argo namespace  
-`helm install argo-workflows argo/argo-workflows -n argo`  install argo-workflow
-`kubectl edit deploy argo-workflows-server -n argo` edit workflow and patch with 
+![Chart](https://github.com/k17hawk/aml_project/blob/main/images/my-chart.jpeg)
+### microservice for training model </br>
+Use you own IP,sql server detils  and own mongoDB API </br>
+ build the docker file Dockerfile </br>
+`docker build -t mypyspark:latest .`
+ save the docker file </br>
+`docker save -o mypyspark.tar mypyspark:latest`
+load into minique </br>
+`minikube load mypyspark.tar` 
+ add the addonis </br>
+`minikube addons enable csi-hostpath-driver`
+ creat argo namespace   </br>
+`kubectl create namespace argo`
+install argo-workflow </br>
+`helm install argo-workflows argo/argo-workflows -n argo`  
+edit workflow and patch with  </br>
 `kubectl -n argo patch deployment argo-workflows-server  --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value": "--auth-mode=server"}]'`
-`helm install my-chart ./my-chart -n argo` install my-chart microservice
-`kubectl port-forward svc/argo-workflows-server -n argo 2746:2746` view the UI 
+install my-chart microservice </br>
+`helm install my-chart ./my-chart -n argo` 
+view the UI  </br>
+`kubectl port-forward svc/argo-workflows-server -n argo 2746:2746` 
 
-### microservice to fetch the data for prediction
-`docker build -f Dockerfile.python -t pythonkafka:latest .`build docker file
-`docker save -o pythonkafka.tar pythonkafka:latest` save it
-`minikube image load pythonkafka.tar` load it
-`enable bitnami by installing it`
-`helm install kafka -n argo bitnami/kafka --version 29.3.14 -f kafka-values.yaml` the kafka-values.yaml are in my-chart 
-`kubectl run -n argo kafka-client --restart='Never' --image docker.io/bitnami/kafka:3.7.1-debian-12-r4 --namespace default --command -- sleep infinity` kafka client for creating topics
-`kubectl exec --tty -i kafka-client --namespace default -- bash`
-`kafka-topics.sh --create --bootstrap-server kafka.argo.svc.cluster.local:9092 --topic my-gcs-data --partitions 3 --replication-factor 2`
+![Chart](https://github.com/k17hawk/aml_project/blob/main/images/gcs-microservice.jpeg)
+### microservice to fetch the data for prediction </br>
+ build docker file </br>
+`docker build -f Dockerfile.python -t pythonkafka:latest .`
+`docker save -o pythonkafka.tar pythonkafka:latest` save it </br>
+`minikube image load pythonkafka.tar` load it </br>
+`enable bitnami by installing it` </br>
+`helm install kafka -n argo bitnami/kafka --version 29.3.14 -f kafka-values.yaml` the kafka-values.yaml are in my-chart  </br>
+`kubectl run -n argo kafka-client --restart='Never' --image docker.io/bitnami/kafka:3.7.1-debian-12-r4 --namespace default --command -- sleep infinity` kafka client for creating topics </br>
+`kubectl exec --tty -i kafka-client --namespace default -- bash` </br>
+`kafka-topics.sh --create --bootstrap-server kafka.argo.svc.cluster.local:9092 --topic my-gcs-data --partitions 3 --replication-factor 2` </br>
 Now store data into aml-data-bucket/predictions in your google cloud</br>
-also enable and give permission for pub/sub topic notification
-`kubectl create secret generic gcp-service-account --from-file=key.json=path/to/data-prediction-pipe-data-61d5e9bb16fa.json -n argo`
-`helm install gcs-microservice ./gcs-microservice -n argo`
+also enable and give permission for pub/sub topic notification </br>
+`kubectl create secret generic gcp-service-account --from-file=key.json=path/to/data-prediction-pipe-data-61d5e9bb16fa.json -n argo` </br>
+`helm install gcs-microservice ./gcs-microservice -n argo` </br>
 
-### microservice for prediction 
-`docker build -f Dockerfile.spark -t pythonspark:latest .`
-`docker save -o pythonspark.tar pythonspark:latets`
-`minikube image load pythonspark.tar`
-`helm install prediction-chart ./predicton-chart -n argo`
+![Chart](https://github.com/k17hawk/aml_project/blob/main/images/prediction-chart.jpeg)
+### microservice for prediction  </br>
+`docker build -f Dockerfile.spark -t pythonspark:latest .` </br>
+`docker save -o pythonspark.tar pythonspark:latets` </br>
+`minikube image load pythonspark.tar` </br>
+`helm install prediction-chart ./predicton-chart -n argo` </br>
