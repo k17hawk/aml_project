@@ -76,9 +76,11 @@ class SimpleKafkaConsumer:
 
                 for _, records in messages.items():
                     for record in records:
+                        print(f"fetching data..{records}")
                         batch.append(record.value)
 
                 if batch:
+                    print(f"Batch size: {len(batch)}")
                     logger.info(f"Processing batch of {len(batch)} messages")
                     self._handle_batch(batch)
 

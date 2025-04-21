@@ -84,19 +84,19 @@ spec:
             - name: SPARK_K8S_IMAGE
               value: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             - name: SPARK_K8S_NAMESPACE
-              value: "default"
+              value: "argo"
             - name: SPARK_K8S_SERVICE_ACCOUNT
               value: "{{ .Values.serviceAccount.name }}"
             - name: SPARK_K8S_BATCH_DELAY
               value: "5s"
             - name: SPARK_EXECUTOR_MEMORY
-              value: "1g"
+              value: "768m"
             - name: SPARK_DRIVER_MEMORY
               value: "1g"
             - name: SPARK_MEMORY_FRACTION
-              value: "0.75"
+              value: "0.6"
             - name: SPARK_STORAGE_FRACTION
-              value: "0.3"
+              value: "0.5"
             - name: SPARK_SHUFFLE_PARTITIONS
               value: "2"
             - name: SPARK_DEFAULT_PARALLELISM
@@ -110,40 +110,34 @@ spec:
             - name: SPARK_UI_REVERSE_PROXY
               value: "true"
             - name: model_saved
-              vlaue: {{ .Values.model.persistence.mountPath }}
+              value: {{ .Values.model.persistence.mountPath }}
             - name: DATA_DIR
               value: {{ .Values.dataConsumer.persistence.mountPath }}
           resources:
             requests:
-              cpu: "500m"
-              memory: "1.5Gi"
+              cpu: "0"        
+              memory: "0"
             limits:
-              cpu: "1"
-              memory: "2Gi"
+              cpu: "0"
+              memory: "0"
 
           command: ["/bin/sh", "-c"]
           args:
             - "python /app/file_watcher.py"
           volumeMounts:
-            - name: data-volume
+            - name: shared-data
               mountPath: {{ .Values.dataConsumer.persistence.mountPath }}
               readOnly: {{ .Values.dataConsumer.persistence.readOnly }}
             - name: model-volume
               mountPath: {{ .Values.model.persistence.mountPath }}
               readOnly: {{ .Values.model.persistence.readOnly }}
+
+      volumes:
+        - name: shared-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.dataConsumer.persistence.existingClaim }}
+        - name: model-volume
+          persistentVolumeClaim:
+            claimName: {{ .Values.model.persistence.existingClaim }}
       
-  volumeClaimTemplates:
-    - metadata:
-        name: data-volume
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi
-    - metadata:
-        name: model-volume
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi
+

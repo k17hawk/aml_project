@@ -18,11 +18,25 @@ spec:
         {{- include "gcs-microservice.labels" . | nindent 8 }}
         component: consumer
     spec:
+      initContainers:
+        - name: consumer-init
+          image: busybox
+          command: ["sh", "-c", "mkdir -p /app/data/inbox-data && chown -R 1000:1000 /app/data/inbox-data"]
+          volumeMounts:
+            - name: shared-data
+              mountPath: /app/data/inbox-data
+            
+            - name: gcp-key
+              mountPath: /var/secrets/google
+              readOnly: true
+ 
       containers:
         - name: kafka-consumer
           image: "{{ .Values.kafkaSidecars.image.repository }}:{{ .Values.kafkaSidecars.image.tag }}"
           imagePullPolicy: {{ .Values.kafkaSidecars.image.pullPolicy }}
-          
+          securityContext:
+            runAsUser: 1000  
+            runAsGroup: 1000
           env:
             - name: RUN_MODE
               value: "consumer"
@@ -33,13 +47,9 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           volumeMounts:
-            - name: gcp-key
-              mountPath: /var/secrets/google
-              readOnly: true
-            {{- if .Values.kafkaSidecars.persistence.enabled }}
-            - name: processed-files
-              mountPath: /data/inbox-data/
-            {{- end }}
+            - name: shared-data
+              mountPath: /app/data/inbox-data
+    
           resources:
             {{- toYaml .Values.kafkaSidecars.resources | nindent 12 }}
 
@@ -50,8 +60,8 @@ spec:
             items:
               - key: {{ .Values.kafkaSidecars.gcs.secretKey }}
                 path: key.json
-        {{- if .Values.kafkaSidecars.persistence.enabled }}
-        - name: processed-files
+        
+        - name: shared-data
           persistentVolumeClaim:
             claimName: data-consumer-pvc
-        {{- end }}
+
