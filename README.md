@@ -5,27 +5,26 @@ this project simulates the real world project building starting from exporting d
 
 # **Initial research**
 The datasets are taken from Kaggle a SAML-D version of antimoney laundering which is a synthetic data curated by IBM.
-**Research and Eda on data**
+**Research and Eda on data**  </br>
+Data columns (total 12 columns):  </br>
+    Column                  Dtype    </br>
+---  ------                  -----    </br>
+ 0   Time                    object  </br>
+ 1   Date                    object   </br>
+ 2   Sender_account          int64    </br>
+ 3   Receiver_account        int64    </br>
+ 4   Amount                  float64  </br>
+ 5   Payment_currency        object   </br>
+ 6   Received_currency       object   </br>
+ 7   Sender_bank_location    object   </br>
+ 8   Receiver_bank_location  object   </br>
+ 9   Payment_type            object   </br>
+ 10  Is_laundering           int64    </br>
+ 11  Laundering_type         object   </br>
+dtypes: float64(1), int64(3), object(8)  </br>
+memory usage: 870.2+ MB  </br>
 
-Data columns (total 12 columns):
- #   Column                  Dtype  
----  ------                  -----  
- 0   Time                    object 
- 1   Date                    object 
- 2   Sender_account          int64  
- 3   Receiver_account        int64  
- 4   Amount                  float64
- 5   Payment_currency        object 
- 6   Received_currency       object 
- 7   Sender_bank_location    object 
- 8   Receiver_bank_location  object 
- 9   Payment_type            object 
- 10  Is_laundering           int64  
- 11  Laundering_type         object 
-dtypes: float64(1), int64(3), object(8)
-memory usage: 870.2+ MB
-
-There was  9504852 records, 12 columns and of size 870MB.
+There was  9504852 records, 12 columns and of size 870MB.  </br>
 The bulk of the transactions were below 10K, with the median being 6,113.72, and 75% of transactions were below 10.5K.</br>
 At the 90th percentile, it as  already at 16,560.85, indicating that the higher value transactions were becoming less frequent, but they still represent a significant portion of the data.</br>
 The 99th percentile (45K) shows that only 1% of the transactions were larger than 45K. This means the majority of the data is heavily concentrated in smaller amounts.</br>
@@ -70,7 +69,7 @@ During December holidays and summer vacations (may-June-July), legitimate busine
 
 The UK is known for having massive banking transactions due to its status as a global financial hub, attracting significant investment and financial activity from around the world.
 
-# Architecure 
+# Architecture
 The building process is quite similar in term of backend and model versoning, the extra and most useful techniques used in this project is entire project is divided into 3 microservice.</br>
 
 ## Starting with backend
@@ -89,9 +88,9 @@ To run the code, start by creating conda environment and store data into your go
 `conda create -p .conda python=3.11 -y` </br>
 `run insert.py` to store data into sql server but don;t forget to change the credentials  </br>
 </br>
+
+![Chart](https://github.com/k17hawk/aml_project/blob/main/images/my-chart.jpeg)
 ### microservice for training model </br>
-<img src="https://github.com/k17hawk/aml_project/blob/main/images/my-chart.jpeg" height="400"/>
- </br>
 Use you own IP,sql server detils  and own mongoDB API </br>
  build the docker file Dockerfile </br>
 `docker build -t mypyspark:latest .`
@@ -112,9 +111,8 @@ install my-chart microservice </br>
 view the UI  </br>
 `kubectl port-forward svc/argo-workflows-server -n argo 2746:2746` 
 
+![Chart](https://github.com/k17hawk/aml_project/blob/main/images/gcs-microservice.jpeg)
 ### microservice to fetch the data for prediction </br>
-<img src="https://github.com/k17hawk/aml_project/blob/main/images/gcs-microservice.jpeg" height="400"/>
- </br>
  build docker file </br>
 `docker build -f Dockerfile.python -t pythonkafka:latest .`
 `docker save -o pythonkafka.tar pythonkafka:latest` save it </br>
@@ -129,9 +127,8 @@ also enable and give permission for pub/sub topic notification </br>
 `kubectl create secret generic gcp-service-account --from-file=key.json=path/to/data-prediction-pipe-data-61d5e9bb16fa.json -n argo` </br>
 `helm install gcs-microservice ./gcs-microservice -n argo` </br>
 
+![Chart](https://github.com/k17hawk/aml_project/blob/main/images/prediction-chart.jpeg)
 ### microservice for prediction  </br>
-<img src="https://github.com/k17hawk/aml_project/blob/main/images/prediction-chart.jpeg" height="400"/>
- </br>
 `docker build -f Dockerfile.spark -t pythonspark:latest .` </br>
 `docker save -o pythonspark.tar pythonspark:latets` </br>
 `minikube image load pythonspark.tar` </br>
