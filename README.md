@@ -85,10 +85,6 @@ accuracy of random forest</br>
 
 
 # Architecure 
-=======
-# Architecture
->>>>>>> 5c4f92ceba4a0154c2e2cbfb67fbd68e962c8407
-The building process is quite similar in term of backend and model versoning, the extra and most useful techniques used in this project is entire project is divided into 3 microservice.</br>
 
 ## Starting with backend
 The source directory of a project is src.</br>
