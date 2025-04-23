@@ -72,7 +72,7 @@ The UK is known for having massive banking transactions due to its status as a g
 
 # **model building and training**
 two model were trained XGboost classifier and Random forest classifer.
-accuracy of random forest</br>
+the best accuracy was from random forest</br>
 **Accuracy**: 0.8911 — This means that the model correctly classified 89.11% of all instances. While not perfect, it is relatively high.</br>
 
 **Precision**: 0.9990 — This is a very strong score, meaning that when the model predicts a positive (fraudulent transaction), it is almost always correct. This is crucial in fraud detection, as false positives are costly. </br>
@@ -94,7 +94,7 @@ src/constant *the constant used in project*</br>
 src/DB *for sql server connection*</br>
 src/entity *for entity and input and artifact each component they generate* </br>
 src/file_insertion *for inserting data into sql server*</br>
-src/kafka_fetch *for messaging data*</br>
+src/kafka_fetch *for messaging data*</br>`  
 src/ml *for sql customize transformation and  logic for loading old model*</br>
 src/pipeline *executing each pipeline in sequence* </br>
 ### running the code</br>
